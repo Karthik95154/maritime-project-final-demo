@@ -1,0 +1,30 @@
+{
+  "image_name": "20260624_160819.jpg.jpeg",
+  "manual_homography_plane_points": [],
+  "manual_damage_polygons": [
+    {
+      "damage_id": "manual_1",
+      "damage_class": "damage",
+      "points": [
+        [
+          2369,
+          1306
+        ],
+        [
+          2295,
+          2554
+        ],
+        [
+          3039,
+          2856
+        ],
+        [
+          3156,
+          1406
+        ]
+      ]
+    }
+  ],
+  "annotation_source": "main_pipeline_1_hitl_window",
+  "hitl_status": "corrected"
+}

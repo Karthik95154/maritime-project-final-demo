@@ -1,0 +1,64 @@
+pipeline:
+  name: "main_pipeline_1"
+  status: "experimental_production_candidate"
+  production_default: false
+  deployed: false
+  experiment_sources: ["v2_1_1", "v2_1_2"]
+  depth_diagnostic_merged: false
+
+paths:
+  input_images_dir: "production_ready/main_pipeline_1/data/input_images"
+  input_frames_dir: "production_ready/main_pipeline_1/data/input_frames"
+  manual_damage_polygon_dir: "production_ready/main_pipeline_1/data/manual_damage_polygons"
+  manual_img_values_dir: "production_ready/main_pipeline_1/data/manual_img_values"
+  apriltag_inputs_dir: "production_ready/main_pipeline_1/data/apriltag_inputs"
+  output_root: "production_ready/main_pipeline_1/outputs"
+  final_json_output_path: "production_ready/main_pipeline_1/outputs/final_json/final_area_estimation_main_pipeline_1_results.json"
+  overlays_dir: "production_ready/main_pipeline_1/outputs/overlays"
+  debug_dir: "production_ready/main_pipeline_1/outputs/debug"
+  hitl_required_dir: "production_ready/main_pipeline_1/outputs/hitl_required"
+
+models:
+  damage_segmentation_model_path: "experiments/Detection_modules/yolo_seg_deformation_best.pt"
+  part_detection_model_path: "experiments/Detection_modules/yolo26m_part_seg_best.pt"
+
+apriltag:
+  tag_family: "tag36h11"
+  selection_policy: "config_priority"
+  tag_options:
+    - tag_id: 1
+      tag_size_mm: 148.0
+      label: "primary_148mm"
+      enabled: true
+
+inference:
+  image_extensions: [".jpg", ".jpeg", ".png", ".bmp"]
+  damage_confidence_threshold: 0.25
+
+damage_resolution:
+  enable_damage_hitl: true
+  force_damage_hitl: true
+  input_priority: "auto_first"
+  accepted_manual_input_types:
+    - "manual_damage_polygon"
+    - "labelstudio_polygon"
+    - "yolo_txt_segmentation"
+    - "yolo_txt_bbox"
+
+homography:
+  mode: "apriltag_full_image"
+  use_rectified_apriltag_scale: true
+  require_manual_plane_points: false
+  enable_manual_homography_fallback: true
+
+outputs:
+  write_debug_stage_json: true
+  write_overlays: true
+  write_hitl_requests: true
+  final_json_filename: "final_area_estimation_main_pipeline_1_results.json"
+
+hitl:
+  default_mode: "both"
+  manual_values_dir: "production_ready/main_pipeline_1/data/manual_img_values"
+  hitl_required_dir: "production_ready/main_pipeline_1/outputs/hitl_required"
+  final_json_path: "production_ready/main_pipeline_1/outputs/final_json/final_area_estimation_main_pipeline_1_results.json"

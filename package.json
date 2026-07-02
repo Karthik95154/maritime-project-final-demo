@@ -1,0 +1,9 @@
+{
+  "name": "maritimeinspect-root",
+  "private": true,
+  "scripts": {
+    "start": "powershell -ExecutionPolicy Bypass -File ./start-maritimeinspect.ps1",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload"
+  }
+}

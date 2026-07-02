@@ -1,0 +1,30 @@
+{
+  "image_name": "WhatsApp Image 2026-06-04 at 17.08.58 (1).jpeg",
+  "manual_homography_plane_points": [],
+  "manual_damage_polygons": [
+    {
+      "damage_id": "manual_1",
+      "damage_class": "unknown",
+      "points": [
+        [
+          582,
+          334
+        ],
+        [
+          586,
+          606
+        ],
+        [
+          911,
+          611
+        ],
+        [
+          910,
+          327
+        ]
+      ]
+    }
+  ],
+  "annotation_source": "hitl_window",
+  "hitl_status": "corrected"
+}

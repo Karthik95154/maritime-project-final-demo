@@ -1,0 +1,30 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.*
+.env.local
+.env.*.local
+.DS_Store
+.vscode/
+
+# Backend outputs
+backend/outputs/
+backend/uploads/
+outputs/
+uploads/
+backend/final_models/
+backend/__pycache__/
+*.pyc
+
+# Debug files
+*.log
+*.txt
+backend.log
+grep_output.txt
+setters.txt
+use_effect_output.txt
+use_effect_full.txt
+setters_all.txt
+useeffect_all.txt
