@@ -25,7 +25,7 @@ import { DefectDetectionHitlPage } from "./pages/hitl/DefectDetectionHitlPage";
 import { SegmentationHitlPage } from "./pages/hitl/SegmentationHitlPage";
 import { AreaHitlPage } from "./pages/hitl/AreaHitlPage";
 import { CostHitlPage } from "./pages/hitl/CostHitlPage";
-import { ReportHitlPage } from "./pages/hitl/ReportHitlPage";
+
 
 
 import { VesselsPage } from "./pages/VesselsPage";
@@ -106,7 +106,7 @@ export const appRouter = createBrowserRouter([
       { path: "segmentation/:sessionId", element: <SegmentationHitlPage /> },
       { path: "area/:sessionId", element: <AreaHitlPage /> },
       { path: "cost/:sessionId", element: <CostHitlPage /> },
-      { path: "report/:sessionId", element: <ReportHitlPage /> },
+      
       { path: "", element: <Navigate to="/internal/review" replace /> },
     ],
   },

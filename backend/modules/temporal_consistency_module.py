@@ -1,6 +1,7 @@
 import os
 import json
 import cv2
+from utils.image import load_image
 import torch
 import numpy as np
 import open_clip
@@ -571,7 +572,7 @@ class TemporalConsistencyModule:
 
             frame_path = frame_data["frame_path"]
 
-            frame = cv2.imread(frame_path)
+            frame = load_image(frame_path)
 
             if frame is None:
                 continue
@@ -822,7 +823,7 @@ if __name__ == "__main__":
 
         frame_path = frame_data["frame_path"]
 
-        frame = cv2.imread(frame_path)
+        frame = load_image(frame_path)
 
         if frame is None:
             continue

@@ -115,9 +115,13 @@ function PartDetectionHitlContent({ sessionId }: { sessionId: string }) {
     // Setup Image
     const rawPath = frame.frame_path || frame.frame_id;
     if (typeof rawPath === 'string') {
-        const parts = rawPath.split("outputs");
-        if (parts.length > 1) {
-            setFrameUrl(`http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`);
+        if (rawPath.startsWith("http://") || rawPath.startsWith("https://")) {
+            setFrameUrl(rawPath);
+        } else {
+            const parts = rawPath.split("outputs");
+            if (parts.length > 1) {
+                setFrameUrl(`http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`);
+            }
         }
     }
   };
@@ -560,8 +564,12 @@ function PartDetectionHitlContent({ sessionId }: { sessionId: string }) {
               let p = "";
               const rawPath = frame.frame_path || frame.frame_id;
               if (rawPath) {
-                  const parts = rawPath.split("outputs");
-                  if (parts.length > 1) p = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
+                  if (rawPath.startsWith("http://") || rawPath.startsWith("https://")) {
+                      p = rawPath;
+                  } else {
+                      const parts = rawPath.split("outputs");
+                      if (parts.length > 1) p = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
+                  }
               }
               const isSelected = i === currentFrameIndex;
               const detsCount = frame.part_detections?.length || 0;

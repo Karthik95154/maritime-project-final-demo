@@ -488,12 +488,24 @@ class DocumentGenerationModule:
             output_docx_path
         )
 
+        final_path = output_docx_path
+
+        try:
+            from services.supabase_service import supabase_service
+            if supabase_service.is_configured():
+                session_id = os.path.basename(self.output_folder)
+                supabase_path = f"reports/{session_id}_vessel_inspection_report.docx"
+                public_url = supabase_service.upload_file(output_docx_path, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                final_path = public_url
+        except Exception as e:
+            print(f"Failed to upload report to Supabase: {e}")
+
         print(
             f"[INFO] Report saved: "
-            f"{output_docx_path}"
+            f"{final_path}"
         )
 
-        return output_docx_path
+        return final_path
 
     # =====================================================
     # CREATE BATCH REPORT
@@ -612,8 +624,19 @@ class DocumentGenerationModule:
         output_docx_path = os.path.join(output_dir, "combined_vessel_inspection_report.docx")
         
         document.save(output_docx_path)
-        print(f"[INFO] Batch Report saved: {output_docx_path}")
-        return output_docx_path
+
+        final_path = output_docx_path
+        try:
+            from services.supabase_service import supabase_service
+            if supabase_service.is_configured():
+                supabase_path = f"reports/{batch_id}_combined_vessel_inspection_report.docx"
+                public_url = supabase_service.upload_file(output_docx_path, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                final_path = public_url
+        except Exception as e:
+            print(f"Failed to upload batch report to Supabase: {e}")
+
+        print(f"[INFO] Batch Report saved: {final_path}")
+        return final_path
 
 # =========================================================
 # TESTING

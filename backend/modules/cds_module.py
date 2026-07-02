@@ -1,5 +1,6 @@
 import os
 import cv2
+from utils.image import load_image
 import time
 import torch
 import numpy as np
@@ -287,7 +288,7 @@ class CDSModule:
     def run_classification(self, frames):
         outputs = []
         for frame_data in frames:
-            frame = cv2.imread(frame_data["frame_path"])
+            frame = load_image(frame_data["frame_path"])
             if frame is None:
                 continue
             print(f"[INFO] Running Classification on Frame: {frame_data['frame_id']}")
@@ -306,7 +307,7 @@ class CDSModule:
         frame_index = 0
         for frame_data in frames:
             frame_id = frame_data["frame_id"]
-            frame = cv2.imread(frame_data["frame_path"])
+            frame = load_image(frame_data["frame_path"])
             if frame is None:
                 continue
             print(f"[INFO] Running Part Detection on Frame: {frame_index}")
@@ -331,7 +332,7 @@ class CDSModule:
         frame_index = 0
         for frame_data, item in zip(frames, human_part_detections):
             frame_id = item["frame_id"]
-            frame = cv2.imread(item["frame_path"])
+            frame = load_image(item["frame_path"])
             if frame is None:
                 continue
             print(f"[INFO] Running Defect Detection on Frame: {frame_index}")
@@ -355,7 +356,7 @@ class CDSModule:
         outputs = []
         for item in human_detections:
             frame_id = item["frame_id"]
-            frame = cv2.imread(item["frame_path"])
+            frame = load_image(item["frame_path"])
             if frame is None:
                 continue
             print(f"[INFO] Running Segmentation on Frame: {frame_id}")

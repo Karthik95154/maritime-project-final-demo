@@ -135,11 +135,28 @@ class FrameExtractionModule:
         )
 
         cv2.imwrite(path, frame)
+        
+        final_path = path
+        
+        try:
+            from services.supabase_service import supabase_service
+            if supabase_service.is_configured():
+                # Encode frame to bytes
+                success, encoded_image = cv2.imencode('.jpg', frame)
+                if success:
+                    file_bytes = encoded_image.tobytes()
+                    # We need a unique path for supabase
+                    session_id = os.path.basename(os.path.dirname(self.output_dir))
+                    supabase_path = f"frames/{session_id}_{filename}"
+                    public_url = supabase_service.upload_bytes(file_bytes, supabase_path, "image/jpeg")
+                    final_path = public_url
+        except Exception as e:
+            print(f"Failed to upload frame to Supabase: {e}")
 
         return {
             "frame_id": frame_index,
             "timestamp": timestamp,
-            "frame_path": path
+            "frame_path": final_path
         }
 
     # =========================================================

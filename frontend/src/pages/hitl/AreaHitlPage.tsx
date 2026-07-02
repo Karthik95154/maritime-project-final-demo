@@ -160,14 +160,18 @@ function AreaHitlContent({ sessionId }: { sessionId: string }) {
   };
 
   // Image logic for Konva
-  let framePath = "";
-  const actualPath = currentDefect?.best_frame_path || currentDefect?.frame_path;
-  if (actualPath) {
-      const parts = actualPath.split("outputs");
-      if (parts.length > 1) framePath = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
-  }
+    let framePath = "";
+    const actualPath = currentDefect?.best_frame_path || currentDefect?.frame_path;
+    if (actualPath) {
+      if (actualPath.startsWith("http://") || actualPath.startsWith("https://")) {
+        framePath = actualPath;
+      } else {
+        const parts = actualPath.split("outputs");
+        if (parts.length > 1) framePath = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
+      }
+    }
   const imageName = actualPath ? actualPath.split(/\\|\//).pop() : "";
-  const [image] = useImage(framePath);
+  const [image] = useImage(framePath, "anonymous");
 
   // Polygon Logic
   let polygonPoints: number[] = [];
@@ -398,8 +402,8 @@ function AreaHitlContent({ sessionId }: { sessionId: string }) {
               let p = "";
               const actualP = defect?.best_frame_path || defect?.frame_path;
               if (actualP) {
-                  const parts = actualP.split("outputs");
-                  if (parts.length > 1) p = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
+                  if (actualP.startsWith("http://") || actualP.startsWith("https://")) p = actualP; else { const parts = actualP.split("outputs");
+                  if (parts.length > 1) p = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, "/")}`; }
               }
               const isSelected = key === currentDefectId;
               

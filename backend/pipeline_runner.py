@@ -240,6 +240,7 @@ def run_area_estimation_stage(session_id, session_folder):
     # ========================================================
     import sys
     import cv2
+    from utils.image import load_image
     from pathlib import Path
     
     mp1_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "modules", "main_pipeline_1", "code"))
@@ -273,7 +274,7 @@ def run_area_estimation_stage(session_id, session_folder):
         loaded = next((img for img in images if img.path.as_posix() == Path(best_frame_path).as_posix()), None)
         
         if not loaded:
-            img_mat = cv2.imread(best_frame_path)
+            img_mat = load_image(best_frame_path)
             if img_mat is not None:
                 loaded = PipelineImage(name=Path(best_frame_path).name, path=Path(best_frame_path), image=img_mat)
                 images.append(loaded)
@@ -383,7 +384,7 @@ def run_report_generation_stage(session_id, session_folder):
     
     update_session(session_id, document_path=report)
     
-    _pause_for_review(session_id, "Report", "report_review", "completed")
+    update_session(session_id, progress=100, status="completed", current_stage="Completed", review_checkpoint="completed", review_status="approved", pipeline_resume_from="completed")
 
 
 async def run_pipeline(session_id, video_path, session_folder):
@@ -458,6 +459,7 @@ def recalculate_area_with_manual_homography(session_folder, defect_id, homograph
     """Recalculates area for a single defect using manual homography points."""
     import sys
     import cv2
+    from utils.image import load_image
     from pathlib import Path
 
     paths = _paths(session_folder)

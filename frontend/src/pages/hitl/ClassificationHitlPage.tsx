@@ -110,7 +110,10 @@ function ClassificationHitlContent({ sessionId }: { sessionId: string }) {
     if (Array.isArray(fallbackFrames) && fallbackFrames.length > index) {
       const rawPath = fallbackFrames[index].frame_path || fallbackFrames[index];
       if (typeof rawPath === 'string') {
-          const parts = rawPath.split("outputs");
+          if (rawPath.startsWith("http://") || rawPath.startsWith("https://")) {
+              return rawPath;
+          }
+          if (rawPath.startsWith("http://") || rawPath.startsWith("https://")) return rawPath; const parts = rawPath.split("outputs");
           if (parts.length > 1) return `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
       }
     }

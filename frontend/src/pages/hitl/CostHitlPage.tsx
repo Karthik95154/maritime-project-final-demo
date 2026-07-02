@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Typography, TextField } from "@mui/material";
+import { Box, Typography, Button, Stack, Table, TableBody, TableCell, TableHead, TableRow, IconButton, TextField, Paper, Divider, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { 
   HitlLayout,
   HitlHeader,
@@ -12,6 +13,7 @@ import {
   useHitlAutosave,
   useHitlShortcuts
 } from "../../components/hitl";
+import { backendApi, API_BASE_URL } from "../../api/backendApi";
 
 function CostHitlContent({ sessionId }: { sessionId: string }) {
   const navigate = useNavigate();
@@ -20,11 +22,11 @@ function CostHitlContent({ sessionId }: { sessionId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use the standard history hook for undo/redo on text
+  // humanOutput stores the full JSON structure
   const { currentState: humanOutput, pushState: setHumanOutput, undo, redo, canUndo, canRedo, resetHistory } = useHitlHistory<any>(null);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}`)
+    fetch($/api/v1/internal/reviews/{sessionId})
       .then(async (res) => {
         if (!res.ok) throw new Error(await res.text());
         return res.json();
@@ -35,7 +37,7 @@ function CostHitlContent({ sessionId }: { sessionId: string }) {
         const existingHuman = pipelineData["repair_human_json"];
         const aiOutput = pipelineData["repair_ai_json"];
         
-        resetHistory(existingHuman || aiOutput || []);
+        resetHistory(existingHuman || aiOutput || { defect_repairs: {}, repair_summary: {} });
         setLoading(false);
       })
       .catch(err => {
@@ -46,7 +48,7 @@ function CostHitlContent({ sessionId }: { sessionId: string }) {
   }, [sessionId, resetHistory]);
 
   const handleSave = async (dataToSave: any) => {
-    await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/cost`, {
+    await fetch($/api/v1/internal/reviews/{sessionId}/cost, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -66,7 +68,7 @@ function CostHitlContent({ sessionId }: { sessionId: string }) {
   const handleDecision = async (decision: string) => {
     try {
       await forceSave(humanOutput);
-      await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/cost`, {
+      await fetch($/api/v1/internal/reviews/{sessionId}/cost, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -92,6 +94,52 @@ function CostHitlContent({ sessionId }: { sessionId: string }) {
     disabled: loading || !!error
   });
 
+  const handleUpdateItem = (defectId: string, itemIdx: number, field: string, value: any) => {
+    if (!humanOutput) return;
+    const nextState = JSON.parse(JSON.stringify(humanOutput));
+    
+    const items = nextState.defect_repairs[defectId].repair_estimation.required_items;
+    items[itemIdx][field] = value;
+    
+    // Recalculate total_cost for item
+    if (field === 'quantity' || field === 'unit_cost') {
+        const q = Number(items[itemIdx].quantity) || 0;
+        const c = Number(items[itemIdx].unit_cost) || 0;
+        items[itemIdx].total_cost = q * c;
+    }
+    
+    // Recalculate defect estimated_total_cost
+    const total = items.reduce((sum: number, item: any) => sum + (Number(item.total_cost) || 0), 0);
+    nextState.defect_repairs[defectId].repair_estimation.estimated_total_cost = total;
+    
+    setHumanOutput(nextState);
+  };
+
+  const handleAddItem = (defectId: string) => {
+    if (!humanOutput) return;
+    const nextState = JSON.parse(JSON.stringify(humanOutput));
+    nextState.defect_repairs[defectId].repair_estimation.required_items.push({
+      item_name: "New Item",
+      unit: "pcs",
+      quantity: 1,
+      unit_cost: 0,
+      total_cost: 0
+    });
+    setHumanOutput(nextState);
+  };
+
+  const handleRemoveItem = (defectId: string, itemIdx: number) => {
+    if (!humanOutput) return;
+    const nextState = JSON.parse(JSON.stringify(humanOutput));
+    const items = nextState.defect_repairs[defectId].repair_estimation.required_items;
+    items.splice(itemIdx, 1);
+    
+    const total = items.reduce((sum: number, item: any) => sum + (Number(item.total_cost) || 0), 0);
+    nextState.defect_repairs[defectId].repair_estimation.estimated_total_cost = total;
+    
+    setHumanOutput(nextState);
+  };
+
   if (loading) return <Box p={4}><Typography>Loading session...</Typography></Box>;
   if (error) return <Box p={4}><Typography color="error" fontWeight="bold">{error}</Typography></Box>;
 
@@ -109,72 +157,90 @@ function CostHitlContent({ sessionId }: { sessionId: string }) {
       />
       <HitlMainContainer>
         <HitlWorkspace>
-          <Box sx={{ display: 'flex', flex: 1, gap: 2, p: 2, height: '100%', minHeight: 0 }}>
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#ffffff', borderRadius: 1, border: '1px solid #e2e8f0', overflow: 'hidden', minHeight: 0 }}>
-              <Box sx={{ p: 2, borderBottom: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
-                <Typography variant="subtitle2" fontWeight="bold" color="#334155">Original AI Output</Typography>
-              </Box>
-              <Box sx={{ p: 2, flex: 1, overflowY: 'auto' }}>
-                <pre style={{ margin: 0, fontSize: '0.85rem', color: '#475569', whiteSpace: 'pre-wrap' }}>
-                  {JSON.stringify(data?.pipeline_data?.["cost_ai_json"], null, 2)}
-                </pre>
-              </Box>
-            </Box>
-
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#ffffff', borderRadius: 1, border: '1px solid #e2e8f0', overflow: 'hidden', minHeight: 0 }}>
-              <Box sx={{ p: 2, borderBottom: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
-                <Typography variant="subtitle2" fontWeight="bold" color="#0ea5e9">Editable Human Output</Typography>
-              </Box>
-              <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <TextField 
-                  multiline
-                  fullWidth
-                  variant="outlined"
-                  sx={{ 
-                    flex: 1,
-                    '& .MuiInputBase-root': { height: '100%', alignItems: 'flex-start', fontFamily: 'monospace', fontSize: '0.85rem', overflow: 'hidden' },
-                    '& .MuiInputBase-input': { height: '100% !important', overflowY: 'auto !important' }
-                  }}
-                  value={typeof humanOutput === 'string' ? humanOutput : JSON.stringify(humanOutput, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      setHumanOutput(JSON.parse(e.target.value));
-                    } catch {
-                      setHumanOutput(e.target.value);
-                    }
-                  }}
-                />
-              </Box>
-            </Box>
+          <Box sx={{ flex: 1, p: 3, overflowY: 'auto' }}>
+            <Typography variant="h5" fontWeight={700} mb={3}>Repair Estimation Breakdown</Typography>
+            
+            {humanOutput?.defect_repairs && Object.entries(humanOutput.defect_repairs).map(([defectId, defectData]: [string, any]) => (
+              <Accordion key={defectId} defaultExpanded sx={{ mb: 2, borderRadius: 2, '&:before': { display: 'none' }, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                <AccordionSummary expandIcon={<ChevronDown />} sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" width="100%" pr={2}>
+                    <Typography variant="subtitle1" fontWeight={600}>
+                      {defectData.defect_name || defectId}
+                    </Typography>
+                    <Typography variant="subtitle1" fontWeight={700} color="primary">
+                      {defectData.repair_estimation?.estimated_total_cost?.toLocaleString() || 0}
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Required Item / Process</TableCell>
+                        <TableCell>Unit</TableCell>
+                        <TableCell width={100}>Quantity</TableCell>
+                        <TableCell width={150}>Unit Cost ($)</TableCell>
+                        <TableCell>Total ($)</TableCell>
+                        <TableCell width={50}></TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {defectData.repair_estimation?.required_items?.map((item: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>
+                            <TextField size="small" fullWidth value={item.item_name} onChange={(e) => handleUpdateItem(defectId, idx, 'item_name', e.target.value)} />
+                          </TableCell>
+                          <TableCell>
+                            <TextField size="small" value={item.unit} onChange={(e) => handleUpdateItem(defectId, idx, 'unit', e.target.value)} />
+                          </TableCell>
+                          <TableCell>
+                            <TextField size="small" type="number" value={item.quantity} onChange={(e) => handleUpdateItem(defectId, idx, 'quantity', e.target.value)} />
+                          </TableCell>
+                          <TableCell>
+                            <TextField size="small" type="number" value={item.unit_cost} onChange={(e) => handleUpdateItem(defectId, idx, 'unit_cost', e.target.value)} />
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {item.total_cost?.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <IconButton size="small" color="error" onClick={() => handleRemoveItem(defectId, idx)}>
+                              <Trash2 size={16} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <Button startIcon={<Plus size={16} />} sx={{ mt: 2 }} onClick={() => handleAddItem(defectId)}>
+                    Add Item
+                  </Button>
+                </AccordionDetails>
+              </Accordion>
+            ))}
           </Box>
         </HitlWorkspace>
-        
         <HitlSidebar>
-          <Box sx={{ p: 2.5, flexGrow: 1, overflowY: 'auto' }}>
-            <Typography variant="subtitle2" color="#64748b" sx={{ textTransform: 'uppercase', mb: 2, letterSpacing: 0.5, borderBottom: 1, borderColor: '#e2e8f0', pb: 1 }}>Instructions</Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Review the final generated JSON cost parameters.
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Make any required corrections directly in the Editable Human Output text box. The JSON must be valid.
-            </Typography>
+          <Box p={2}>
+             <Typography variant="subtitle2" color="text.secondary" textTransform="uppercase" mb={2}>Review Guidelines</Typography>
+             <Typography variant="body2" paragraph>Review the required repairing items for each defect. You can add missing tools, adjust labor hours, or fix material costs directly in the tables.</Typography>
+             <Typography variant="body2">Totals will recalculate automatically when you change quantities or unit prices.</Typography>
           </Box>
-
-          <HitlActionBar 
-            onApprove={() => handleDecision('assess_continue')}
-            onReject={() => handleDecision('reject')}
-            onSaveDraft={() => forceSave(humanOutput)}
-            isSaving={saveStatus === 'saving'}
-          />
         </HitlSidebar>
       </HitlMainContainer>
+      <HitlActionBar 
+        onApprove={() => handleDecision('assess_continue')}
+        onReject={() => handleDecision('reject')}
+        approveLabel="Approve & Generate Report"
+        rejectLabel="Reject Estimation"
+      />
     </>
   );
 }
 
 export function CostHitlPage() {
-  const { sessionId } = useParams();
+  const { sessionId } = useParams<{ sessionId: string }>();
   if (!sessionId) return null;
+
   return (
     <HitlLayout>
       <CostHitlContent sessionId={sessionId} />

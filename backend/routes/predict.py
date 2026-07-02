@@ -137,15 +137,31 @@ async def predict_videos(
     session_folder = f"outputs/sessions/{session_id}"
     os.makedirs(session_folder, exist_ok=True)
 
+    from services.supabase_service import supabase_service
+
     video_paths = []
     video_names = []
+    remote_video_urls = []
 
     for video in videos:
+        # Save locally for pipeline processing
         video_path = os.path.join(session_folder, video.filename)
         with open(video_path, "wb") as buffer:
             shutil.copyfileobj(video.file, buffer)
+        
         video_paths.append(video_path)
         video_names.append(video.filename)
+
+        # Upload to Supabase for permanent frontend access
+        if supabase_service.is_configured():
+            # Reset file pointer
+            video.file.seek(0)
+            file_bytes = video.file.read()
+            public_url = supabase_service.upload_bytes(file_bytes, f"videos/{session_id}_{video.filename}", video.content_type)
+            remote_video_urls.append(public_url)
+            
+    # Use remote URLs if available for the DB so frontend can access them
+    db_video_paths = remote_video_urls if remote_video_urls else video_paths
 
     # Legacy InspectionSession (For compatibility)
     new_session = InspectionSession(
@@ -160,7 +176,7 @@ async def predict_videos(
         location=location,
         inspection_date=inspection_date,
         comments=comments,
-        video_path=video_paths[0] if video_paths else "",
+        video_paths=db_video_paths,
         output_path=session_folder,
         status="processing",
         progress=0,

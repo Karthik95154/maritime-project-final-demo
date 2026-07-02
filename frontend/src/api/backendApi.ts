@@ -125,7 +125,9 @@ export const backendApi = {
     requestJson<{status: string, message: string}>(`/api/v1/inspections/${sessionId}`, { method: "DELETE" }),
   getInspectionVisualization: (sessionId: string) =>
     requestJson<VisualizationResponse>(`/api/v1/inspections/${sessionId}/visualization`),
-  getInspectionReport: (sessionId: string) =>
+  explainDefect: (sessionId: string, defectId: string) =>
+      requestJson<{explanation: string}>(/api/v1/inspections/${sessionId}/line_items/${defectId}/explain),
+    getInspectionReport: (sessionId: string) =>
     requestJson<InspectionReportResponse>(`/api/v1/inspections/${sessionId}/report`),
   getDefectProgression: (sessionId: string) =>
     requestJson<ProgressionResponse>(`/api/v1/inspections/${sessionId}/progression`),

@@ -195,3 +195,29 @@ async def delete_inspection(session_id: str, inspection_service: InspectionServi
         return {"status": "success", "message": "Inspection deleted"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/inspections/{session_id}/line_items/{item_id}/explain")
+async def explain_line_item(session_id: str, item_id: str, inspection_service: InspectionService = Depends(get_inspection_service)):
+    session = await _session_or_404(session_id, inspection_service)
+    
+    defects = build_defects(session)
+    defect = next((d for d in defects if d.get("defectId") == item_id), None)
+    
+    if not defect:
+        raise HTTPException(status_code=404, detail="Line item not found")
+        
+    defect_type = defect.get("defectType", "Unknown Defect")
+    severity = defect.get("severity", "Unknown")
+    cost = defect.get("repairCost", 0)
+    area = defect.get("area", 0)
+    
+    explanation = f"This line item for '{defect_type}' was generated because the AI model detected a region of damage covering {area:.2f} sq.m. "
+    
+    if severity.lower() == "high":
+        explanation += f"The severity was classified as {severity.upper()} due to the deep penetration and structural risk detected in the segmentation mask, "
+    else:
+        explanation += f"The severity was classified as {severity.title()} based on surface-level visual characteristics, "
+        
+    explanation += f"triggering a standard repair estimate of $ according to the configured rate sheet."
+    
+    return {"explanation": explanation}

@@ -1,6 +1,7 @@
 import os
 import json
 import cv2
+from utils.image import load_image
 import numpy as np
 from collections import defaultdict
 
@@ -342,7 +343,7 @@ class UniqueDefectFrameExtractor:
                 best_entry["frame_path"]
             )
 
-            frame = cv2.imread(
+            frame = load_image(
                 best_frame_path
             )
 
@@ -562,7 +563,7 @@ if __name__ == "__main__":
             defect_data["best_frame_path"]
         )
 
-        frame = cv2.imread(frame_path)
+        frame = load_image(frame_path)
 
         if frame is None:
             continue
