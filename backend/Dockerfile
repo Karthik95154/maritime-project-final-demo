@@ -10,6 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     fonts-liberation \
     gcc \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
     libreoffice-writer \
     && rm -rf /var/lib/apt/lists/*
 
@@ -17,7 +22,7 @@ COPY requirements.txt .
 
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
-
+    
 COPY . .
 
 RUN useradd --create-home --shell /bin/bash appuser && \
