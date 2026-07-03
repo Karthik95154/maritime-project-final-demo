@@ -150,8 +150,8 @@ async def inspection_report(session_id: str, inspection_service: InspectionServi
             f"with estimated repair exposure of INR {summary['totalEstimatedCost']:,.0f}."
         ),
         "defects": defects,
-        "downloadDocxUrl": f"/api/v1/download/{session.session_id}" if summary["documentReady"] else None,
-        "downloadPdfUrl": f"/api/v1/download/{session_id}/pdf" if summary["documentReady"] else None,
+        "downloadDocxUrl": f"/api/v1/download/{session.session_id}" if getattr(session, "document_docx_url", None) or getattr(session, "document_path", None) else None,
+        "downloadPdfUrl": f"/api/v1/download/{session.session_id}/pdf" if getattr(session, "document_pdf_url", None) or getattr(session, "document_path", None) else None,
     }
 
 @router.get("/inspections/{session_id}/progression")

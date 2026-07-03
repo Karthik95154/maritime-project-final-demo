@@ -42,6 +42,18 @@ export function AppShell() {
   const { sidebarOpen, setSidebarOpen, user, logout } = useAppStore();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
+  const blurActiveElement = () => {
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+  };
+
+  const closeMobileSidebar = () => {
+    blurActiveElement();
+    setSidebarOpen(false);
+  };
+
   const currentNavItems = [
     { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     { label: "Inspections", path: "/inspections", icon: ClipboardList },
@@ -74,8 +86,8 @@ export function AppShell() {
       <Drawer
         variant="temporary"
         open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        ModalProps={{ keepMounted: true }}
+        onClose={closeMobileSidebar}
+        ModalProps={{ keepMounted: false }}
         sx={{
           display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": { 
@@ -91,7 +103,7 @@ export function AppShell() {
       >
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
           <Logo light />
-          <IconButton onClick={() => setSidebarOpen(false)} sx={{ color: "#fff" }}>
+          <IconButton onClick={closeMobileSidebar} sx={{ color: "#fff" }}>
             <MenuIcon size={18} />
           </IconButton>
         </Stack>
@@ -101,7 +113,7 @@ export function AppShell() {
             const Icon = item.icon;
             const active = location.pathname === item.path;
             return (
-              <ListItemButton key={item.label} onClick={(e) => { e.currentTarget.blur(); navigate(item.path); setSidebarOpen(false); }} sx={{ borderRadius: 2, minHeight: 48, px: 2, mb: 0.5, bgcolor: active ? alpha("#3B82F6", 0.15) : "transparent", color: active ? "#3B82F6" : alpha("#fff", 0.7), borderLeft: active ? "3px solid #3B82F6" : "3px solid transparent", transition: "all 0.2s ease" }}>
+              <ListItemButton key={item.label} onClick={(e) => { e.currentTarget.blur(); navigate(item.path); closeMobileSidebar(); }} sx={{ borderRadius: 2, minHeight: 48, px: 2, mb: 0.5, bgcolor: active ? alpha("#3B82F6", 0.15) : "transparent", color: active ? "#3B82F6" : alpha("#fff", 0.7), borderLeft: active ? "3px solid #3B82F6" : "3px solid transparent", transition: "all 0.2s ease" }}>
                 <ListItemIcon sx={{ minWidth: 36, color: "inherit", justifyContent: "center" }}><Icon size={20} /></ListItemIcon>
                 <ListItemText primary={item.label} primaryTypographyProps={{ variant: "body2", fontWeight: active ? 600 : 500, sx: { transition: "font-weight 0.2s ease" } }} />
               </ListItemButton>

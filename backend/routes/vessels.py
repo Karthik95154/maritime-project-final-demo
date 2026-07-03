@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from fastapi import APIRouter, HTTPException, Depends
 from dependencies.services import get_vessel_service, get_defect_service, get_drydock_visit_service, get_analysis_session_service
 from services.drydock_visit_service import DrydockVisitService
@@ -9,12 +11,23 @@ from models import Vessel, DefectRegistry, AnalysisSession, DryDockVisit
 
 router = APIRouter()
 
+
+def _to_iso(value):
+    if value is None:
+        return None
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, str):
+        return value
+    return str(value)
+
 @router.get("/")
 async def list_vessels(vessel_service: VesselService = Depends(get_vessel_service), defect_service: DefectService = Depends(get_defect_service)):
     vessels = await vessel_service.repo.find_many({}, limit=0)
     results = []
     for v in vessels:
         vessel_defects = await defect_service.repo.count({"vessel_id": v.get("imo"), "severity": "Critical"})
+        total_defects = await defect_service.repo.count({"vessel_id": v.get("imo")})
         health = v.get("health_score", 100)
         risk = "Critical" if health < 60 else "High" if health < 75 else "Medium" if health < 90 else "Low"
         
@@ -23,10 +36,11 @@ async def list_vessels(vessel_service: VesselService = Depends(get_vessel_servic
             "vesselName": v.get("vessel_name"),
             "vesselType": v.get("vessel_type"),
             "grossTonnage": v.get("gross_tonnage"),
-            "lastInspectionDate": v.get("last_inspection_date").isoformat() if v.get("last_inspection_date") else None,
+            "lastInspectionDate": _to_iso(v.get("last_inspection_date")),
             "healthScore": health,
             "riskScore": risk,
             "criticalDefects": vessel_defects,
+            "totalDefects": total_defects,
             "totalInspections": v.get("total_visits", 0),
             "owner": v.get("owner"),
             "operator": v.get("operator")
@@ -82,7 +96,7 @@ async def get_vessel_visits(imo_number: str, vessel_service: VesselService = Dep
             "visitId": vid,
             "visitNumber": v.get("visit_number"),
             "visitType": v.get("visit_type"),
-            "startDate": v.get("start_date").isoformat() if v.get("start_date") else None,
+            "startDate": _to_iso(v.get("start_date")),
             "status": v.get("status"),
             "reportVersion": v.get("report_version"),
             "totalDefects": v.get("total_defects"),
@@ -91,7 +105,7 @@ async def get_vessel_visits(imo_number: str, vessel_service: VesselService = Dep
                     "sessionId": s.get("session_id"),
                     "videos": s.get("uploaded_videos", []),
                     "status": s.get("status"),
-                    "createdAt": s.get("created_at").isoformat() if s.get("created_at") else None
+                    "createdAt": _to_iso(s.get("created_at"))
                 } for s in sessions
             ]
         })
@@ -113,8 +127,9 @@ async def get_vessel_defects(imo_number: str, defect_service: DefectService = De
             "area": defect.get("area"),
             "status": defect.get("status"),
             "repairCost": defect.get("cost_estimation", 0.0),
-            "firstDetected": defect.get("first_detected").isoformat() if defect.get("first_detected") else None,
-            "lastDetected": defect.get("last_detected").isoformat() if defect.get("last_detected") else None,
+            "lineItems": defect.get("line_items", []),
+            "firstDetected": _to_iso(defect.get("first_detected")),
+            "lastDetected": _to_iso(defect.get("last_detected")),
             "sessionIds": defect.get("session_ids", []),
             "history": defect.get("history", [])
         })

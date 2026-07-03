@@ -106,14 +106,20 @@ export function VesselsPage() {
                       />
                     </Box>
                     <Grid container spacing={1} pt={1} borderTop="1px solid" borderColor="divider">
-                      <Grid size={{ xs: 6 }} >
-                        <Typography variant="caption" color="text.secondary" fontWeight={500} display="block">Critical Defects</Typography>
+                      <Grid size={{ xs: 4 }} >
+                        <Typography variant="caption" color="text.secondary" fontWeight={500} display="block">Line Items</Typography>
+                        <Typography variant="body1" fontWeight={700} color="text.primary">
+                          {vessel.totalDefects || 0}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 4 }} >
+                        <Typography variant="caption" color="text.secondary" fontWeight={500} display="block">Critical</Typography>
                         <Typography variant="body1" fontWeight={700} color={vessel.criticalDefects > 0 ? "error.main" : "text.primary"}>
                           {vessel.criticalDefects || 0}
                         </Typography>
                       </Grid>
-                      <Grid size={{ xs: 6 }} >
-                        <Typography variant="caption" color="text.secondary" fontWeight={500} display="block">Last Inspected</Typography>
+                      <Grid size={{ xs: 4 }} >
+                        <Typography variant="caption" color="text.secondary" fontWeight={500} display="block">Inspected</Typography>
                         <Typography variant="body2" fontWeight={600} color="text.primary">
                           {vessel.lastInspectionDate ? new Date(vessel.lastInspectionDate).toLocaleDateString() : "Never"}
                         </Typography>

@@ -53,12 +53,12 @@ async def shutdown_db_client():
     await close_mongo_connection()
 
 
-# Secure CORS - restricting from ["*"] to specific allowed hosts
+# Configure CORS to allow frontend connections from any cloud provider (Vercel, Render, Netlify, etc.)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://localhost:80", "http://localhost:5173", "https://yourproductiondomain.com"],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "*"]) # Change * in production

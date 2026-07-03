@@ -85,6 +85,48 @@ export const backendApi = {
     requestJson<HistoricalInspection[]>("/api/v1/internal/reviews"),
   getInternalReviewDetail: (sessionId: string) =>
     requestJson<InternalReviewDetail>(`/api/v1/internal/reviews/${sessionId}`),
+  saveClassificationReview: (sessionId: string, data: any) =>
+    requestJson(`/api/v1/internal/reviews/${sessionId}/classification`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  saveDefectDetectionReview: (sessionId: string, data: any) =>
+    requestJson(`/api/v1/internal/reviews/${sessionId}/defect_detection`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  savePartDetectionReview: (sessionId: string, data: any) =>
+    requestJson(`/api/v1/internal/reviews/${sessionId}/part_detection`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  saveSegmentationReview: (sessionId: string, data: any) =>
+    requestJson(`/api/v1/internal/reviews/${sessionId}/segmentation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  saveAreaReview: (sessionId: string, data: any) =>
+    requestJson(`/api/v1/internal/reviews/${sessionId}/area`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  recalculateAreaReview: (sessionId: string, data: any) =>
+    requestJson(`/api/v1/internal/reviews/${sessionId}/area/recalculate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  saveCostReview: (sessionId: string, data: any) =>
+    requestJson(`/api/v1/internal/reviews/${sessionId}/cost`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
   submitInternalReviewDecision: (
     sessionId: string,
     payload: { 
@@ -126,7 +168,7 @@ export const backendApi = {
   getInspectionVisualization: (sessionId: string) =>
     requestJson<VisualizationResponse>(`/api/v1/inspections/${sessionId}/visualization`),
   explainDefect: (sessionId: string, defectId: string) =>
-      requestJson<{explanation: string}>(/api/v1/inspections/${sessionId}/line_items/${defectId}/explain),
+      requestJson<{explanation: string}>(`/api/v1/inspections/${sessionId}/line_items/${defectId}/explain`),
     getInspectionReport: (sessionId: string) =>
     requestJson<InspectionReportResponse>(`/api/v1/inspections/${sessionId}/report`),
   getDefectProgression: (sessionId: string) =>

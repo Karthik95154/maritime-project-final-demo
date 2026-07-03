@@ -1,3 +1,4 @@
+import { backendApi, API_BASE_URL } from "../../api/backendApi";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Typography, Button, FormControl, InputLabel, Select, MenuItem, TextField, Chip, Stack, IconButton, Divider, Tooltip, Autocomplete } from "@mui/material";
@@ -42,18 +43,14 @@ function SegmentationHitlContent({ sessionId }: { sessionId: string }) {
   const { currentState: humanOutput, pushState: setHumanOutput, undo, redo, canUndo, canRedo, resetHistory } = useHitlHistory<any>(null);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(await res.text());
-        return res.json();
-      })
+    backendApi.getInternalReviewDetail(sessionId!)
       .then(json => {
         setData(json);
         const pipelineData = json.pipeline_data || {};
         const existingHuman = pipelineData["segmentation_human_json"];
         const aiOutput = pipelineData["segmentation_ai_json"];
         
-        const initialOutput = existingHuman || aiOutput || {};
+        let initialOutput = existingHuman || aiOutput || {};
         resetHistory(initialOutput);
         
         // Pick first defect ID
@@ -70,15 +67,14 @@ function SegmentationHitlContent({ sessionId }: { sessionId: string }) {
   }, [sessionId, resetHistory]);
 
   const handleSave = async (dataToSave: any) => {
-    await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/segmentation`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      await backendApi.saveSegmentationReview(sessionId!, {
         decision: "save_assessment",
         corrections: dataToSave,
         reviewer: "System Admin"
-      })
-    });
+      });
+      console.log("Saved segmentation:", dataToSave);
+    } catch (err) {}
   };
 
   const { status: saveStatus, lastSaved, forceSave } = useHitlAutosave({
@@ -90,20 +86,14 @@ function SegmentationHitlContent({ sessionId }: { sessionId: string }) {
   const handleDecision = async (decision: string) => {
     try {
       await forceSave(humanOutput); // ensure latest is saved
-      await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/segmentation`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          decision,
-          corrections: humanOutput,
-          reviewer: "System Admin"
-        })
+      await backendApi.saveSegmentationReview(sessionId!, {
+        decision,
+        corrections: humanOutput,
+        reviewer: "System Admin"
       });
-      if (decision === "assess_continue") {
-        navigate("/internal/review");
-      }
+      if (decision === "assess_continue") navigate("/internal/review");
     } catch (err) {
-      console.error("Failed to submit decision", err);
+      console.error(err);
     }
   };
 
@@ -157,7 +147,7 @@ function SegmentationHitlContent({ sessionId }: { sessionId: string }) {
       framePath = actualPath;
     } else {
       const parts = actualPath.split("outputs");
-      if (parts.length > 1) framePath = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
+      if (parts.length > 1) framePath = `/outputs${parts[1].replace(/\\/g, '/')}`;
     }
   }
   const [image] = useImage(framePath, "anonymous");
@@ -473,7 +463,7 @@ function SegmentationHitlContent({ sessionId }: { sessionId: string }) {
                   p = actualP;
                 } else {
                   const parts = actualP.split("outputs");
-                  if (parts.length > 1) p = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
+                  if (parts.length > 1) p = `/outputs${parts[1].replace(/\\/g, '/')}`;
                 }
               }
               const isSelected = key === currentDefectId;

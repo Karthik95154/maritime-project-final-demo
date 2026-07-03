@@ -178,4 +178,5 @@ export interface ReviewFrameItem {
 export interface InternalReviewDetail extends InspectionSessionSummary {
   frameReviewItems: ReviewFrameItem[];
   defectReviewItems: DefectRecord[];
+  pipeline_data?: Record<string, any>;
 }

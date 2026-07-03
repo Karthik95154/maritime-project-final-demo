@@ -377,20 +377,29 @@ class DocumentGenerationModule:
                 level=3
             )
 
-            best_frame_path = (
-                repair_data[
-                    "defect_metadata"
-                ][
-                    "best_frame_path"
-                ]
-            )
+            import requests
+            import tempfile
+            from urllib.parse import urlparse
 
-            if os.path.exists(best_frame_path):
-
-                document.add_picture(
-                    best_frame_path,
-                    width=Inches(5.5)
-                )
+            best_frame_path = repair_data.get("defect_metadata", {}).get("best_frame_path", "")
+            
+            if best_frame_path:
+                try:
+                    is_url = bool(urlparse(best_frame_path).scheme)
+                    if is_url:
+                        response = requests.get(best_frame_path, stream=True)
+                        if response.status_code == 200:
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
+                                for chunk in response.iter_content(chunk_size=8192):
+                                    tmp_file.write(chunk)
+                            document.add_picture(tmp_file.name, width=Inches(5.5))
+                            os.unlink(tmp_file.name)
+                        else:
+                            print(f"[ERROR] Image URL returned status {response.status_code}")
+                    elif os.path.exists(best_frame_path):
+                        document.add_picture(best_frame_path, width=Inches(5.5))
+                except Exception as e:
+                    print(f"[ERROR] Failed to add image to document: {e}")
 
             # =============================================
             # REPAIR EXPLANATION
@@ -435,42 +444,35 @@ class DocumentGenerationModule:
             hdr[3].text = "Total Cost"
             hdr[4].text = "Currency"
 
-            required_items = (
-                repair_data[
-                    "repair_estimation"
-                ][
-                    "required_items"
-                ]
-            )
+            required_items = repair_data.get("repair_estimation", {}).get("required_items", [])
 
             for item in required_items:
-
                 row = cost_table.add_row().cells
 
                 row[0].text = str(
-                    item["item_name"]
+                    item.get("item_name", "Unknown Item")
                 )
 
                 row[1].text = str(
-                    item["required_quantity"]
+                    item.get("required_quantity", "N/A")
                 )
 
                 row[2].text = str(
-                    item["unit_cost"]
+                    item.get("unit_cost", "N/A")
                 )
 
                 row[3].text = str(
-                    item["total_cost"]
+                    item.get("total_cost", "N/A")
                 )
 
                 row[4].text = str(
-                    item["currency"]
+                    item.get("currency", "")
                 )
 
+            est_cost = repair_data.get("repair_estimation", {}).get("estimated_total_cost", "0")
+            curr = repair_data.get("repair_estimation", {}).get("currency", "USD")
             document.add_paragraph(
-                f"Estimated Repair Cost: "
-                f"{repair_data['repair_estimation']['estimated_total_cost']} "
-                f"{repair_data['repair_estimation']['currency']}"
+                f"Estimated Repair Cost: {est_cost} {curr}"
             )
 
         # =================================================
@@ -478,9 +480,7 @@ class DocumentGenerationModule:
         # =================================================
 
         output_docx_path = os.path.join(
-
             self.output_folder,
-
             "vessel_inspection_report.docx"
         )
 
@@ -488,24 +488,21 @@ class DocumentGenerationModule:
             output_docx_path
         )
 
-        final_path = output_docx_path
-
-        try:
-            from services.supabase_service import supabase_service
-            if supabase_service.is_configured():
-                session_id = os.path.basename(self.output_folder)
-                supabase_path = f"reports/{session_id}_vessel_inspection_report.docx"
+        from services.supabase_service import supabase_service
+        if supabase_service.is_configured():
+            try:
                 public_url = supabase_service.upload_file(output_docx_path, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-                final_path = public_url
-        except Exception as e:
-            print(f"Failed to upload report to Supabase: {e}")
+                return {
+                    "document_docx_url": public_url,
+                    "document_pdf_url": public_url
+                }
+            except Exception as e:
+                print(f"Failed to upload report to Supabase: {e}")
 
-        print(
-            f"[INFO] Report saved: "
-            f"{final_path}"
-        )
-
-        return final_path
+        return {
+            "document_docx_url": output_docx_path,
+            "document_pdf_url": output_docx_path
+        }
 
     # =====================================================
     # CREATE BATCH REPORT
@@ -625,18 +622,21 @@ class DocumentGenerationModule:
         
         document.save(output_docx_path)
 
-        final_path = output_docx_path
-        try:
-            from services.supabase_service import supabase_service
-            if supabase_service.is_configured():
-                supabase_path = f"reports/{batch_id}_combined_vessel_inspection_report.docx"
+        from services.supabase_service import supabase_service
+        if supabase_service.is_configured():
+            try:
                 public_url = supabase_service.upload_file(output_docx_path, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-                final_path = public_url
-        except Exception as e:
-            print(f"Failed to upload batch report to Supabase: {e}")
+                return {
+                    "document_docx_url": public_url,
+                    "document_pdf_url": public_url
+                }
+            except Exception as e:
+                print(f"Failed to upload batch report to Supabase: {e}")
 
-        print(f"[INFO] Batch Report saved: {final_path}")
-        return final_path
+        return {
+            "document_docx_url": output_docx_path,
+            "document_pdf_url": output_docx_path
+        }
 
 # =========================================================
 # TESTING

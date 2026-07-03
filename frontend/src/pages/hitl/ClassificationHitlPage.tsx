@@ -1,3 +1,4 @@
+import { backendApi, API_BASE_URL } from "../../api/backendApi";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Typography, Button, FormControl, InputLabel, Select, MenuItem, TextField, Chip, IconButton, Divider, Tooltip, Autocomplete, Stack } from "@mui/material";
@@ -35,11 +36,7 @@ function ClassificationHitlContent({ sessionId }: { sessionId: string }) {
   const { currentState: humanOutput, pushState: setHumanOutput, undo, redo, canUndo, canRedo, resetHistory } = useHitlHistory<any[]>([]);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(await res.text());
-        return res.json();
-      })
+    backendApi.getInternalReviewDetail(sessionId!)
       .then(json => {
         setData(json);
         const pipelineData = json.pipeline_data || {};
@@ -61,15 +58,14 @@ function ClassificationHitlContent({ sessionId }: { sessionId: string }) {
   }, [sessionId, resetHistory]);
 
   const handleSave = async (dataToSave: any[]) => {
-    await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/classification`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      await backendApi.saveClassificationReview(sessionId!, {
         decision: "save_assessment",
         corrections: dataToSave,
         reviewer: "System Admin"
-      })
-    });
+      });
+      console.log("Saved classification:", dataToSave);
+    } catch (err) {}
   };
 
   const { status: saveStatus, lastSaved, forceSave } = useHitlAutosave({
@@ -81,20 +77,14 @@ function ClassificationHitlContent({ sessionId }: { sessionId: string }) {
   const handleDecision = async (decision: string) => {
     try {
       await forceSave(humanOutput); // ensure latest is saved
-      await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/classification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          decision,
-          corrections: humanOutput,
-          reviewer: "System Admin"
-        })
+      await backendApi.saveClassificationReview(sessionId!, {
+        decision,
+        corrections: humanOutput,
+        reviewer: "System Admin"
       });
-      if (decision === "assess_continue") {
-        navigate("/internal/review");
-      }
+      if (decision === "assess_continue") navigate("/internal/review");
     } catch (err) {
-      console.error("Failed to submit decision", err);
+      console.error(err);
     }
   };
 
@@ -114,7 +104,7 @@ function ClassificationHitlContent({ sessionId }: { sessionId: string }) {
               return rawPath;
           }
           if (rawPath.startsWith("http://") || rawPath.startsWith("https://")) return rawPath; const parts = rawPath.split("outputs");
-          if (parts.length > 1) return `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
+          if (parts.length > 1) return `/outputs${parts[1].replace(/\\/g, '/')}`;
       }
     }
     return "";

@@ -46,6 +46,18 @@ class DefectMatchingEngine:
             severity = d_data.get("severity", "Low")
             area = metadata.get("defect_area", 0.0)
             cost = d_data.get("repair_estimation", {}).get("estimated_total_cost", 0)
+            req_items = d_data.get("repair_estimation", {}).get("required_items", [])
+            line_items = [
+                {
+                    "item": it.get("item_name", ""),
+                    "description": it.get("item_name", ""),
+                    "quantity": it.get("required_quantity", 0),
+                    "unit": it.get("metrics", ""),
+                    "unit_cost": it.get("unit_cost", 0),
+                    "total_cost": it.get("total_cost", 0)
+                } for it in req_items
+            ]
+            
             
             thumbnail_path = metadata.get("best_frame_path")
             if thumbnail_path and thumbnail_path.startswith("outputs/"):
@@ -83,6 +95,7 @@ class DefectMatchingEngine:
                             "area": area,
                             "thumbnail": thumbnail_path,
                             "cost_estimation": cost,
+                            "line_items": line_items,
                             "status": "Active" # Re-activate if it was closed
                         },
                         "$addToSet": {"session_ids": session_id},
@@ -106,6 +119,7 @@ class DefectMatchingEngine:
                     "first_detected": now,
                     "last_detected": now,
                     "cost_estimation": cost,
+                    "line_items": line_items,
                     "session_ids": [session_id],
                     "report_versions": [],
                     "history": [history_entry]

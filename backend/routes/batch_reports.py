@@ -11,6 +11,7 @@ from services.analysis_session_service import AnalysisSessionService
 from services.drydock_visit_service import DrydockVisitService
 from fastapi import Depends
 from models import InspectionSession
+from services.session_views import load_outputs
 
 router = APIRouter()
 
@@ -71,11 +72,12 @@ async def get_batch_report(batch_id: str, inspection_service: InspectionService 
     completed_sessions = 0
 
     for session in sessions:
-        repair_payload = _read_json(_repair_json_path(session)) or {}
+        outputs = load_outputs(session)
+        repair_payload = outputs.get("repair") or {}
         summary = repair_payload.get("repair_summary", {})
         session_defects = repair_payload.get("defect_repairs", {})
 
-        if summary:
+        if session.status == "completed":
             completed_sessions += 1
 
         total_cost += float(summary.get("total_estimated_cost", 0))

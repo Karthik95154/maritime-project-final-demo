@@ -21,6 +21,8 @@ class InspectionSession(BaseModel):
     progress: Optional[int] = 0
     current_stage: Optional[str] = None
     document_path: Optional[str] = None
+    document_pdf_url: Optional[str] = None
+    document_docx_url: Optional[str] = None
     review_checkpoint: Optional[str] = None
     review_status: Optional[str] = None
     review_notes: Optional[str] = None

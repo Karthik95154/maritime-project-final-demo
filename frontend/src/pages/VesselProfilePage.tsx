@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Box, Typography, Stack, Grid, CircularProgress, Chip, Table, TableBody, TableCell, TableHead, TableRow, Button, Tabs, Tab, Avatar, FormControl, InputLabel, Select, MenuItem, Card, CardContent, LinearProgress, Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material";
-import { FileText, ShieldAlert, ArrowLeft, Plus, Trash2, Download, AlertTriangle, ShieldCheck, Activity, Eye, X } from "lucide-react";
+import { Box, Typography, Stack, Grid, CircularProgress, Chip, Table, TableBody, TableCell, TableHead, TableRow, Button, Tabs, Tab, Avatar, FormControl, InputLabel, Select, MenuItem, Card, CardContent, LinearProgress, Dialog, DialogTitle, DialogContent, IconButton, Collapse } from "@mui/material";
+import { FileText, ShieldAlert, ArrowLeft, Plus, Trash2, Download, AlertTriangle, ShieldCheck, Activity, Eye, X, ChevronDown, ChevronUp } from "lucide-react";
 import { backendApi, getAssetUrl, API_BASE_URL } from "../api/backendApi";
 import { SectionCard } from "../components/SectionCard";
 import { SeverityChip } from "../components/SeverityChip";
@@ -14,6 +14,94 @@ function TabPanel(props: any) {
     <div role="tabpanel" hidden={value !== index} {...other}>
       {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
     </div>
+  );
+}
+
+function DefectRow({ defect }: { defect: any }) {
+  const [open, setOpen] = useState(false);
+  
+  return (
+    <>
+      <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: 'rgba(0,0,0,0.01)' } }}>
+        <TableCell padding="checkbox">
+          <IconButton size="small" onClick={() => setOpen(!open)}>
+            {open ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </IconButton>
+        </TableCell>
+        <TableCell>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Avatar 
+               variant="rounded" 
+               src={getAssetUrl(defect.thumbnail || "/outputs/sessions/e6d097c3-a69b-4ff3-9b33-1ecd9646512b/module_1_frame_extraction_output/frame_000000.jpg")} 
+               sx={{ width: 56, height: 56, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} 
+            />
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700}>{defect.partName}</Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                ID: {defect.defectId?.split('-')[0]} • {defect.defectType?.replace("_", " ").toUpperCase()}
+              </Typography>
+            </Box>
+          </Stack>
+        </TableCell>
+        <TableCell>
+          <Stack spacing={1} alignItems="flex-start">
+            <SeverityChip severity={defect.severity} />
+            <Chip size="small" label={defect.status} color={defect.status === 'New' ? 'primary' : 'default'} sx={{ height: 20, fontSize: '0.65rem' }} />
+          </Stack>
+        </TableCell>
+        <TableCell>
+          <Typography variant="body2">{defect.firstDetected ? new Date(defect.firstDetected).toLocaleDateString() : 'N/A'}</Typography>
+          <Typography variant="caption" color="text.secondary">Last: {defect.lastDetected ? new Date(defect.lastDetected).toLocaleDateString() : 'N/A'}</Typography>
+        </TableCell>
+        <TableCell align="right">
+          <Typography variant="body2" fontWeight={600}>{defect.area?.toFixed(2)} m²</Typography>
+        </TableCell>
+        <TableCell align="right">
+          <Typography variant="body2" fontWeight={600}>₹ {defect.repairCost?.toLocaleString()}</Typography>
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 2, p: 2, bgcolor: 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
+              <Typography variant="subtitle2" gutterBottom component="div" fontWeight={600}>
+                Repair Line Items
+              </Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ '& th': { bgcolor: 'transparent', fontWeight: 600, color: 'text.secondary' } }}>
+                    <TableCell>Item</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell align="right">Quantity</TableCell>
+                    <TableCell align="right">Unit Cost (₹)</TableCell>
+                    <TableCell align="right">Total (₹)</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {defect.lineItems && defect.lineItems.length > 0 ? (
+                    defect.lineItems.map((item: any, i: number) => (
+                      <TableRow key={i}>
+                        <TableCell component="th" scope="row">{item.item}</TableCell>
+                        <TableCell>{item.description}</TableCell>
+                        <TableCell align="right">{item.quantity?.toFixed(2)} {item.unit}</TableCell>
+                        <TableCell align="right">{item.unit_cost?.toLocaleString()}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>{item.total_cost?.toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        <Typography variant="body2" color="text.secondary">No line items available</Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </>
   );
 }
 
@@ -54,6 +142,11 @@ export function VesselProfilePage() {
     queryKey: ["vessel_visits", imoNumber],
     queryFn: () => backendApi.getVesselVisits(imoNumber!),
     enabled: !!imoNumber,
+  });
+
+  const { data: historicalInspections } = useQuery({
+    queryKey: ["historical-inspections"],
+    queryFn: backendApi.getHistoricalInspections,
   });
 
   const { data: defects, isLoading: loadingDefects } = useQuery({
@@ -274,6 +367,7 @@ export function VesselProfilePage() {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell padding="checkbox" />
                     <TableCell>Defect</TableCell>
                     <TableCell>Classification</TableCell>
                     <TableCell>Timeline</TableCell>
@@ -283,39 +377,7 @@ export function VesselProfilePage() {
                 </TableHead>
                 <TableBody>
                   {defects.map((defect: any, idx: number) => (
-                    <TableRow key={`${defect.defectId}-${idx}`} sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: 'rgba(0,0,0,0.01)' } }}>
-                      <TableCell>
-                        <Stack direction="row" spacing={2} alignItems="center">
-                          <Avatar 
-                             variant="rounded" 
-                             src={getAssetUrl(defect.thumbnail || "/outputs/sessions/e6d097c3-a69b-4ff3-9b33-1ecd9646512b/module_1_frame_extraction_output/frame_000000.jpg")} 
-                             sx={{ width: 56, height: 56, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} 
-                          />
-                          <Box>
-                            <Typography variant="subtitle2" fontWeight={700}>{defect.partName}</Typography>
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              ID: {defect.defectId.split('-')[0]} • {defect.defectType.replace("_", " ").toUpperCase()}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={1} alignItems="flex-start">
-                          <SeverityChip severity={defect.severity} />
-                          <Chip size="small" label={defect.status} color={defect.status === 'New' ? 'primary' : 'default'} sx={{ height: 20, fontSize: '0.65rem' }} />
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{new Date(defect.firstDetected).toLocaleDateString()}</Typography>
-                        <Typography variant="caption" color="text.secondary">Last: {new Date(defect.lastDetected).toLocaleDateString()}</Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" fontWeight={600}>{defect.area?.toFixed(2)} m²</Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" fontWeight={600}>₹ {defect.repairCost?.toLocaleString()}</Typography>
-                      </TableCell>
-                    </TableRow>
+                    <DefectRow key={`${defect.defectId}-${idx}`} defect={defect} />
                   ))}
                 </TableBody>
               </Table>
@@ -339,42 +401,86 @@ export function VesselProfilePage() {
                </TableRow>
              </TableHead>
              <TableBody>
-                {visits?.flatMap((visit: any) => 
-                  visit.sessions.map((session: any) => ({
-                    name: `Inspection Report - Visit ${visit.visitNumber} (v${visit.reportVersion})`,
-                    type: "Report",
-                    date: session.createdAt ? new Date(session.createdAt).toLocaleDateString() : "Unknown",
-                    url: getAssetUrl(`/api/v1/download/${session.sessionId}/pdf`)
-                  }))
-                )?.map((doc: any, idx: number) => (
-                  <TableRow key={idx}>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <FileText size={16} color="#64748B" />
-                        <Typography variant="body2" fontWeight={600}>{doc.name}</Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={doc.type} size="small" sx={{ bgcolor: 'rgba(0,0,0,0.05)' }} />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">{doc.date}</Typography>
-                    </TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          <Button onClick={() => setViewDocUrl(doc.url)} startIcon={<Eye size={14} />} size="small" variant="outlined" sx={{ textTransform: 'none' }}>View</Button>
-                          <Button component="a" href={`${doc.url}?attachment=true`} download startIcon={<Download size={14} />} size="small" variant="outlined" sx={{ textTransform: 'none' }}>Download</Button>
-                        </Stack>
-                      </TableCell>
-                  </TableRow>
-                )) || (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      <Typography color="text.secondary">No documents available.</Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+                  {(() => {
+                    const visitDocs = visits?.flatMap((visit: any) => 
+                      (visit.sessions || []).map((session: any) => ({
+                        sessionId: session.sessionId,
+                        name: `Inspection Report - Visit ${visit.visitNumber} (v${visit.reportVersion})`,
+                        type: "Report",
+                        date: session.createdAt ? new Date(session.createdAt).toLocaleDateString() : "Unknown",
+                        url: getAssetUrl(`/api/v1/download/${session.sessionId}`),
+                        isCompleted: session.status?.toLowerCase() === 'completed'
+                      }))
+                    ) || [];
+                    
+                    const historicalDocs = (historicalInspections || [])
+                      .filter((h: any) => h.imoNumber === vessel?.imoNumber)
+                      .map((session: any) => ({
+                        sessionId: session.sessionId,
+                        name: `Inspection Report - Single Session (${session.sessionId.substring(0,8)})`,
+                        type: "Report",
+                        date: session.createdAt ? new Date(session.createdAt).toLocaleDateString() : "Unknown",
+                        url: getAssetUrl(`/api/v1/download/${session.sessionId}`),
+                        isCompleted: session.progress === 100 || session.status === 'Completed'
+                      }));
+
+                    const documentList = [...visitDocs, ...historicalDocs];
+
+                    if (documentList.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={4} align="center">
+                            <Typography color="text.secondary">No documents available.</Typography>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+
+                    return documentList.map((doc: any, idx: number) => (
+                      <TableRow key={idx}>
+                        <TableCell>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <FileText size={16} color="#64748B" />
+                            <Typography variant="body2" fontWeight={600}>
+                              {doc.name} {doc.isCompleted ? "" : "(Processing...)"}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={doc.type} size="small" sx={{ bgcolor: 'rgba(0,0,0,0.05)' }} />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">{doc.date}</Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            <Button 
+                              onClick={() => navigate(`/inspections/${doc.sessionId}/report`)} 
+                              startIcon={<Eye size={14} />} 
+                              size="small" 
+                              variant="outlined" 
+                              sx={{ textTransform: 'none' }}
+                            >
+                              View
+                            </Button>
+                            <Button 
+                              component="a" 
+                              href={doc.isCompleted ? `${doc.url}?attachment=true` : '#'} 
+                              download={true} 
+                              startIcon={<Download size={14} />} 
+                              size="small" 
+                              variant="outlined" 
+                              disabled={!doc.isCompleted}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Download
+                            </Button>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    ));
+                  })()}
+                </TableBody>
            </Table>
         </SectionCard>
       </TabPanel>

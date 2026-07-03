@@ -30,9 +30,9 @@ export function ReportsCenterPage() {
     }
   };
 
-  const completedReports = historyData?.filter(item => item.progress === 100 || item.status === "Completed") || [];
+  const allReports = historyData || [];
   
-  const filteredReports = completedReports.filter(report => 
+  const filteredReports = allReports.filter(report => 
     report.vesselName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     report.imoNumber.includes(searchTerm)
   );

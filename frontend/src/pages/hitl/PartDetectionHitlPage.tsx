@@ -1,3 +1,4 @@
+import { backendApi, API_BASE_URL } from "../../api/backendApi";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Typography, Button, IconButton, Divider, Table, TableBody, TableCell, TableHead, TableRow, Select, MenuItem, FormControl, InputLabel, TextField, Stack, Tooltip, Chip, Autocomplete } from "@mui/material";
@@ -47,11 +48,7 @@ function PartDetectionHitlContent({ sessionId }: { sessionId: string }) {
   const trRef = useRef<any>(null);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(await res.text());
-        return res.json();
-      })
+    backendApi.getInternalReviewDetail(sessionId!)
       .then(json => {
         setData(json);
         const pipelineData = json.pipeline_data || {};
@@ -120,7 +117,7 @@ function PartDetectionHitlContent({ sessionId }: { sessionId: string }) {
         } else {
             const parts = rawPath.split("outputs");
             if (parts.length > 1) {
-                setFrameUrl(`http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`);
+                setFrameUrl(`/outputs${parts[1].replace(/\\/g, '/')}`);
             }
         }
     }
@@ -182,15 +179,14 @@ function PartDetectionHitlContent({ sessionId }: { sessionId: string }) {
   };
 
   const handleSave = async (dataToSave: any) => {
-    await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/part_detection`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      await backendApi.savePartDetectionReview(sessionId!, {
         decision: "save_assessment",
         corrections: dataToSave,
         reviewer: "System Admin"
-      })
-    });
+      });
+      console.log("Saved part detection:", dataToSave);
+    } catch (err) {}
   };
 
   const { status: saveStatus, lastSaved, forceSave } = useHitlAutosave({
@@ -202,10 +198,10 @@ function PartDetectionHitlContent({ sessionId }: { sessionId: string }) {
   const handleDecision = async (decision: string) => {
     try {
       await forceSave(fullOutput);
-      await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/part_detection`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision, corrections: fullOutput, reviewer: "System Admin" })
+      await backendApi.savePartDetectionReview(sessionId!, {
+        decision, 
+        corrections: fullOutput, 
+        reviewer: "System Admin"
       });
       if (decision === "assess_continue") navigate("/internal/review");
     } catch (err) {
@@ -568,7 +564,7 @@ function PartDetectionHitlContent({ sessionId }: { sessionId: string }) {
                       p = rawPath;
                   } else {
                       const parts = rawPath.split("outputs");
-                      if (parts.length > 1) p = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
+                      if (parts.length > 1) p = `/outputs${parts[1].replace(/\\/g, '/')}`;
                   }
               }
               const isSelected = i === currentFrameIndex;

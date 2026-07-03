@@ -125,6 +125,26 @@ export function HitlSidebar({ children }: { children: React.ReactNode }) {
 
 // --- Action Bar (Bottom of Sidebar) ---
 export function HitlActionBar({ onApprove, onReject, onSaveDraft, isSaving, approveText = "Approve & Continue (A)", rejectText = "Reject (R)" }: any) {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleApprove = async () => {
+    setIsSubmitting(true);
+    try {
+      await onApprove();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReject = async () => {
+    setIsSubmitting(true);
+    try {
+      await onReject();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Box sx={{ 
       p: 2, 
@@ -141,13 +161,13 @@ export function HitlActionBar({ onApprove, onReject, onSaveDraft, isSaving, appr
           <Button 
             variant="contained" 
             color="primary" 
-            onClick={onApprove} 
+            onClick={handleApprove} 
             sx={{ py: 1.5, fontWeight: 'bold' }} 
             fullWidth
-            disabled={isSaving}
+            disabled={isSubmitting}
             startIcon={<Check size={18} />}
           >
-            {approveText}
+            {isSubmitting ? "Submitting..." : approveText}
           </Button>
         </span>
       </Tooltip>
@@ -161,7 +181,7 @@ export function HitlActionBar({ onApprove, onReject, onSaveDraft, isSaving, appr
                 color="secondary" 
                 onClick={onSaveDraft} 
                 sx={{ flex: 1 }}
-                disabled={isSaving}
+                disabled={isSaving || isSubmitting}
                 startIcon={<Save size={18} />}
               >
                 Save Draft
@@ -175,9 +195,9 @@ export function HitlActionBar({ onApprove, onReject, onSaveDraft, isSaving, appr
             <Button 
               variant="outlined" 
               color="error" 
-              onClick={onReject} 
+              onClick={handleReject} 
               sx={{ flex: 1 }}
-              disabled={isSaving}
+              disabled={isSubmitting}
               startIcon={<X size={18} />}
             >
               {rejectText}

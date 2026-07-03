@@ -16,6 +16,13 @@ from session_manager import update_session, log_audit_trail, log_training_feedba
 
 router = APIRouter(prefix="/internal/reviews", tags=["internal-review"])
 
+
+async def _get_session_doc(session_id: str, inspection_service: InspectionService):
+    doc = await inspection_service.repo.find_one({"session_id": session_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return doc
+
 @router.get("")
 async def review_queue(inspection_service: InspectionService = Depends(get_inspection_service)):
     
@@ -90,13 +97,16 @@ def apply_and_resume(session_id: str, payload, checkpoint: str, next_stage: str,
 
 @router.post("/{session_id}/classification")
 async def submit_classification(session_id: str, payload: ClassificationPayload, background_tasks: BackgroundTasks, inspection_service: InspectionService = Depends(get_inspection_service)):
-    
-    doc = await inspection_service.repo.find_one({"session_id": session_id})
-    if not doc or doc.get("review_checkpoint") != "classification_review":
+    doc = await _get_session_doc(session_id, inspection_service)
+
+    if payload.decision == "save_assessment":
+        await storage_backend.save_json_async(session_id, "classification_human_json", payload.corrections)
+        return {"status": "saved"}
+
+    if doc.get("review_checkpoint") != "classification_review":
         raise HTTPException(status_code=400, detail="Invalid session or checkpoint")
 
     if payload.decision == "assess_continue":
-        paths = _paths(doc.get("output_path"))
         await storage_backend.save_json_async(session_id, "classification_human_json", payload.corrections)
         
         update_session(
@@ -109,16 +119,20 @@ async def submit_classification(session_id: str, payload: ClassificationPayload,
         )
         background_tasks.add_task(resume_pipeline, session_id)
         return {"status": "accepted"}
+    raise HTTPException(status_code=400, detail="Unsupported decision")
 
 @router.post("/{session_id}/part_detection")
 async def submit_part_detection(session_id: str, payload: DetectionPayload, background_tasks: BackgroundTasks, inspection_service: InspectionService = Depends(get_inspection_service)):
-    
-    doc = await inspection_service.repo.find_one({"session_id": session_id})
-    if not doc or doc.get("review_checkpoint") != "part_detection_review":
+    doc = await _get_session_doc(session_id, inspection_service)
+
+    if payload.decision == "save_assessment":
+        await storage_backend.save_json_async(session_id, "part_detection_human_json", payload.corrections)
+        return {"status": "saved"}
+
+    if doc.get("review_checkpoint") != "part_detection_review":
         raise HTTPException(status_code=400, detail="Invalid session or checkpoint")
 
     if payload.decision == "assess_continue":
-        paths = _paths(doc.get("output_path"))
         await storage_backend.save_json_async(session_id, "part_detection_human_json", payload.corrections)
         
         update_session(
@@ -131,16 +145,20 @@ async def submit_part_detection(session_id: str, payload: DetectionPayload, back
         )
         background_tasks.add_task(resume_pipeline, session_id)
         return {"status": "accepted"}
+    raise HTTPException(status_code=400, detail="Unsupported decision")
 
 @router.post("/{session_id}/defect_detection")
 async def submit_defect_detection(session_id: str, payload: DetectionPayload, background_tasks: BackgroundTasks, inspection_service: InspectionService = Depends(get_inspection_service)):
-    
-    doc = await inspection_service.repo.find_one({"session_id": session_id})
-    if not doc or doc.get("review_checkpoint") != "defect_detection_review":
+    doc = await _get_session_doc(session_id, inspection_service)
+
+    if payload.decision == "save_assessment":
+        await storage_backend.save_json_async(session_id, "defect_detection_human_json", payload.corrections)
+        return {"status": "saved"}
+
+    if doc.get("review_checkpoint") != "defect_detection_review":
         raise HTTPException(status_code=400, detail="Invalid session or checkpoint")
 
     if payload.decision == "assess_continue":
-        paths = _paths(doc.get("output_path"))
         await storage_backend.save_json_async(session_id, "defect_detection_human_json", payload.corrections)
         
         update_session(
@@ -153,6 +171,7 @@ async def submit_defect_detection(session_id: str, payload: DetectionPayload, ba
         )
         background_tasks.add_task(resume_pipeline, session_id)
         return {"status": "accepted"}
+    raise HTTPException(status_code=400, detail="Unsupported decision")
 
 @router.post("/{session_id}/segmentation")
 async def submit_segmentation(session_id: str, payload: SegmentationPayload, background_tasks: BackgroundTasks, inspection_service: InspectionService = Depends(get_inspection_service)):
@@ -175,6 +194,9 @@ async def submit_segmentation(session_id: str, payload: SegmentationPayload, bac
         )
         background_tasks.add_task(resume_pipeline, session_id)
         return {"status": "accepted"}
+    elif payload.decision == "save_assessment":
+        await storage_backend.save_json_async(session_id, "segmentation_human_json", payload.corrections)
+        return {"status": "saved"}
 
 @router.post("/{session_id}/area")
 async def submit_area(session_id: str, payload: AreaPayload, background_tasks: BackgroundTasks, inspection_service: InspectionService = Depends(get_inspection_service)):
@@ -197,16 +219,22 @@ async def submit_area(session_id: str, payload: AreaPayload, background_tasks: B
         )
         background_tasks.add_task(resume_pipeline, session_id)
         return {"status": "accepted"}
+    elif payload.decision == "save_assessment":
+        await storage_backend.save_json_async(session_id, "area_human_json", payload.corrections)
+        return {"status": "saved"}
 
 @router.post("/{session_id}/cost")
 async def submit_cost(session_id: str, payload: CostPayload, background_tasks: BackgroundTasks, inspection_service: InspectionService = Depends(get_inspection_service)):
-    
-    doc = await inspection_service.repo.find_one({"session_id": session_id})
-    if not doc or doc.get("review_checkpoint") != "cost_review":
+    doc = await _get_session_doc(session_id, inspection_service)
+
+    if payload.decision == "save_assessment":
+        await storage_backend.save_json_async(session_id, "repair_human_json", payload.corrections)
+        return {"status": "saved"}
+
+    if doc.get("review_checkpoint") != "cost_review":
         raise HTTPException(status_code=400, detail="Invalid session or checkpoint")
 
     if payload.decision == "assess_continue":
-        paths = _paths(doc.get("output_path"))
         await storage_backend.save_json_async(session_id, "repair_human_json", payload.corrections)
         
         update_session(
@@ -219,24 +247,7 @@ async def submit_cost(session_id: str, payload: CostPayload, background_tasks: B
         )
         background_tasks.add_task(resume_pipeline, session_id)
         return {"status": "accepted"}
-
-@router.post("/{session_id}/report")
-async def submit_report(session_id: str, payload: ReportPayload, inspection_service: InspectionService = Depends(get_inspection_service)):
-    
-    doc = await inspection_service.repo.find_one({"session_id": session_id})
-    if not doc or doc.get("review_checkpoint") != "report_review":
-        raise HTTPException(status_code=400, detail="Invalid session or checkpoint")
-
-    if payload.decision == "assess_continue":
-        update_session(
-            session_id,
-            review_status="approved",
-            review_notes=payload.notes,
-            review_updated_by=payload.reviewer,
-            status="completed",
-            current_stage="Completed"
-        )
-        return {"status": "accepted"}
+    raise HTTPException(status_code=400, detail="Unsupported decision")
 
 class RecalculateAreaPayload(BaseModel):
     defect_id: str

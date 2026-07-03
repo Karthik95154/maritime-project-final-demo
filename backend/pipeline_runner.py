@@ -204,8 +204,8 @@ def run_segmentation_stage(session_id, session_folder):
     segmentation_outputs = cds_module.run_segmentation(frames, human_detections)
     save_json(segmentation_outputs, session_id, "segmentation_ai_json")
     
-    # Pause for Segmentation HITL
-    _pause_for_review(session_id, "Segmentation", "segmentation_review", "run_area_estimation_stage")
+    # Skip Segmentation HITL and proceed directly
+    run_area_estimation_stage(session_id, session_folder)
 
 
 def run_area_estimation_stage(session_id, session_folder):
@@ -214,6 +214,8 @@ def run_area_estimation_stage(session_id, session_folder):
     
     # Sync DB data to disk for the modules that expect a local file path
     seg_human = load_json(session_id, "segmentation_human_json")
+    if not seg_human:
+        seg_human = load_json(session_id, "segmentation_ai_json")
     save_json(seg_human, paths["segmentation_human_json"])
     
     # Run Temporal Consistency on the human-approved segmentations
@@ -375,16 +377,25 @@ def run_report_generation_stage(session_id, session_folder):
     module_8_output = os.path.join(session_folder, "module_8_report_generation_output")
     os.makedirs(module_8_output, exist_ok=True)
     with temp_json(human_cost_data) as in_path:
-        report = DocumentGenerationModule(
+        report_urls = DocumentGenerationModule(
             gemini_model_name="gemini-2.5-flash",
             output_folder=module_8_output,
         ).create_report(repair_estimation_json_path=in_path)
     
-    save_json({"document_path": report}, session_id, "report_ai_json")
+    save_json({"document_path": report_urls.get("document_pdf_url", report_urls.get("document_docx_url"))}, session_id, "report_ai_json")
     
-    update_session(session_id, document_path=report)
-    
-    update_session(session_id, progress=100, status="completed", current_stage="Completed", review_checkpoint="completed", review_status="approved", pipeline_resume_from="completed")
+    update_session(
+        session_id, 
+        progress=100, 
+        status="completed", 
+        current_stage="Completed", 
+        review_checkpoint="completed", 
+        review_status="approved", 
+        pipeline_resume_from="completed",
+        document_path=report_urls.get("document_pdf_url"),
+        document_pdf_url=report_urls.get("document_pdf_url"),
+        document_docx_url=report_urls.get("document_docx_url")
+    )
 
 
 async def run_pipeline(session_id, video_path, session_folder):
@@ -511,10 +522,21 @@ def recalculate_area_with_manual_homography(session_folder, defect_id, homograph
     config_path = os.path.join(os.path.dirname(__file__), "modules", "main_pipeline_1", "config", "main_pipeline_1_config.yaml")
     config = load_main_pipeline_config(config_path)
 
-    img_mat = cv2.imread(best_frame_path)
+    if best_frame_path.startswith("http://") or best_frame_path.startswith("https://"):
+        import urllib.request
+        import numpy as np
+        try:
+            req = urllib.request.urlopen(best_frame_path)
+            arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
+            img_mat = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        except Exception as e:
+            print(f"Failed to load image from URL: {e}")
+            img_mat = None
+    else:
+        img_mat = cv2.imread(best_frame_path)
+        
     if img_mat is None:
         return None
-        
     loaded = PipelineImage(name=image_name, path=Path(best_frame_path), image=img_mat)
     
     damage_results = [{

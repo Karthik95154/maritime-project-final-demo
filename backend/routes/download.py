@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 import os
 from dependencies.services import get_inspection_service
 from services.inspection_service import InspectionService
@@ -19,11 +19,18 @@ async def download_report(session_id: str, inspection_service: InspectionService
     if not session:
         return {"error": "Session not found"}
 
-    if not session.get("document_path"):
+    doc_path = session.get("document_docx_url") or session.get("document_path")
+    if not doc_path:
+        return {"error": "Document not ready"}
+
+    if doc_path.startswith("http"):
+        return RedirectResponse(f"{doc_path}?download=")
+
+    if not os.path.exists(doc_path):
         return {"error": "Document not ready"}
 
     return FileResponse(
-        session.get("document_path"),
+        doc_path,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         filename="inspection_report.docx"
     )
@@ -36,7 +43,23 @@ async def download_report_pdf(session_id: str, attachment: bool = False, inspect
     if not session:
         return {"error": "Session not found"}
 
+    pdf_url = session.get("document_pdf_url")
+    if pdf_url and pdf_url.startswith("http"):
+        if attachment:
+            return RedirectResponse(f"{pdf_url}?download=")
+        if ".docx" in pdf_url.lower():
+            return RedirectResponse(f"https://docs.google.com/viewer?url={pdf_url}&embedded=true")
+        return RedirectResponse(pdf_url)
+
     docx_path = session.get("document_path")
+    if docx_path and docx_path.startswith("http"):
+        # For legacy Supabase sessions that only have a docx URL saved in document_path
+        if attachment:
+            return RedirectResponse(f"{docx_path}?download=")
+        # Use Google Docs viewer to render it inline instead of downloading
+        viewer_url = f"https://docs.google.com/viewer?url={docx_path}&embedded=true"
+        return RedirectResponse(viewer_url)
+
     if not docx_path or not os.path.exists(docx_path):
         return {"error": "Document not ready"}
 
@@ -111,7 +134,7 @@ async def download_batch_report(batch_id: str, inspection_service: InspectionSer
     )
 
 @router.get("/batches/{batch_id}/download/pdf")
-async def download_batch_report_pdf(batch_id: str, inspection_service: InspectionService = Depends(get_inspection_service), analysis_session_service: AnalysisSessionService = Depends(get_analysis_session_service)):
+async def download_batch_report_pdf(batch_id: str, attachment: bool = False, inspection_service: InspectionService = Depends(get_inspection_service), analysis_session_service: AnalysisSessionService = Depends(get_analysis_session_service)):
     
     docs = await inspection_service.repo.find_many({"batch_id": batch_id}, sort=[("created_at", 1)])
     
@@ -168,8 +191,9 @@ async def download_batch_report_pdf(batch_id: str, inspection_service: Inspectio
     if not os.path.exists(output_pdf_path):
         return {"error": "Failed to generate PDF"}
 
+    disposition = "attachment" if attachment else "inline"
     return FileResponse(
         output_pdf_path,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'inline; filename="batch_{batch_id}_inspection_report.pdf"'}
+        headers={"Content-Disposition": f'{disposition}; filename="batch_{batch_id}_inspection_report.pdf"'}
     )

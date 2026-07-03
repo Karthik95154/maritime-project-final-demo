@@ -399,7 +399,7 @@ class UniqueDefectFrameExtractor:
                         part["class_name"],
 
                     "part_track_id":
-                        part["track_id"],
+                        part.get("track_id", part.get("id", "manual")),
 
                     **overlap_data
                 })

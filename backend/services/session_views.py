@@ -52,21 +52,39 @@ def _safe_float(value: Any, fallback: float = 0.0) -> float:
 
 
 def load_outputs(session: InspectionSession) -> dict[str, Any]:
-    return {
-        "repair": _read_json(
+    from services.storage import storage_backend
+    storage = storage_backend
+    
+    # Try loading from database first
+    repair = storage.load_json(session.session_id, "repair_human_json")
+    if not repair:
+        repair = storage.load_json(session.session_id, "repair_ai_json")
+        
+    unique = storage.load_json(session.session_id, "area_human_json")
+    if not unique:
+        unique = storage.load_json(session.session_id, "unique_json")
+
+    # Fallback to ephemeral disk if missing
+    if not repair:
+        repair = _read_json(
             _output_file(
                 session,
                 "module_5_repair_estimation_output",
                 "repair_estimation_outputs.json",
             )
-        ),
-        "unique": _read_json(
+        )
+    if not unique:
+        unique = _read_json(
             _output_file(
                 session,
                 "module_4_unique_defect_frame_output",
                 "unique_defect_outputs.json",
             )
-        ),
+        )
+
+    return {
+        "repair": repair,
+        "unique": unique,
     }
 
 

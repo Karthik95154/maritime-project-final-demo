@@ -11,6 +11,8 @@ def update_session(
     status=None,
     current_stage=None,
     document_path=None,
+    document_pdf_url=None,
+    document_docx_url=None,
     review_checkpoint=None,
     review_status=None,
     review_notes=None,
@@ -31,6 +33,12 @@ def update_session(
 
     if document_path is not None:
         update_data["document_path"] = document_path
+
+    if document_pdf_url is not None:
+        update_data["document_pdf_url"] = document_pdf_url
+
+    if document_docx_url is not None:
+        update_data["document_docx_url"] = document_docx_url
 
     if review_checkpoint is not None:
         update_data["review_checkpoint"] = review_checkpoint

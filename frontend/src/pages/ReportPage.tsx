@@ -133,10 +133,10 @@ export function ReportContent({ batchId, sessionId, hideHeader }: { batchId?: st
               Report Actions
             </Typography>
             <Stack spacing={1.5}>
-              <Button fullWidth variant="outlined" startIcon={<FileText size={16} />} component="a" href={reportData.downloadDocxUrl ? getAssetUrl(reportData.downloadDocxUrl) : undefined} disabled={!reportData.downloadDocxUrl} sx={{ justifyContent: "flex-start", textAlign: "left", lineHeight: 1.2 }}>
+              <Button fullWidth variant="outlined" startIcon={<FileText size={16} />} component="a" href={reportData.downloadDocxUrl ? (reportData.downloadDocxUrl.includes("supabase.co") ? `${getAssetUrl(reportData.downloadDocxUrl)}?download=` : getAssetUrl(reportData.downloadDocxUrl)) : undefined} download disabled={!reportData.downloadDocxUrl} sx={{ justifyContent: "flex-start", textAlign: "left", lineHeight: 1.2 }}>
                 Download DOCX
               </Button>
-              <Button fullWidth variant="outlined" startIcon={<Download size={16} />} component="a" href={reportData.downloadPdfUrl ? `${getAssetUrl(reportData.downloadPdfUrl)}?attachment=true` : undefined} disabled={!reportData.downloadPdfUrl} sx={{ justifyContent: "flex-start", textAlign: "left", lineHeight: 1.2 }}>
+              <Button fullWidth variant="outlined" startIcon={<Download size={16} />} component="a" href={reportData.downloadPdfUrl ? (reportData.downloadPdfUrl.includes("supabase.co") ? `${getAssetUrl(reportData.downloadPdfUrl)}?download=` : `${getAssetUrl(reportData.downloadPdfUrl)}?attachment=true`) : undefined} download disabled={!reportData.downloadPdfUrl} sx={{ justifyContent: "flex-start", textAlign: "left", lineHeight: 1.2 }}>
                 Download PDF
               </Button>
               <Divider sx={{ my: 1 }} />
@@ -152,7 +152,7 @@ export function ReportContent({ batchId, sessionId, hideHeader }: { batchId?: st
       </Grid>
       
       {/* LINE ITEMS SECTION */}
-      {singleReportData && singleReportData.defects && singleReportData.defects.length > 0 && (
+      {reportData && reportData.defects && reportData.defects.length > 0 && (
         <Box sx={{ bgcolor: "background.paper", borderRadius: 3, p: 3, mt: 3, boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
           <Typography variant="h5" mb={3} fontWeight={700}>Line Items Breakdown</Typography>
           <Table size="small">
@@ -167,7 +167,7 @@ export function ReportContent({ batchId, sessionId, hideHeader }: { batchId?: st
               </TableRow>
             </TableHead>
             <TableBody>
-              {singleReportData.defects.map(defect => (
+              {reportData.defects.map(defect => (
                 <TableRow key={defect.defectId}>
                   <TableCell sx={{ fontWeight: 500 }}>{defect.defectType}</TableCell>
                   <TableCell>{defect.partName}</TableCell>
@@ -240,3 +240,4 @@ export function ReportPage() {
   
   return <ReportContent batchId={batchId} sessionId={sessionId} />;
 }
+

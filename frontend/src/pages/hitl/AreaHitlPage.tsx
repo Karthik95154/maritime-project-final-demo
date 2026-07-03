@@ -1,3 +1,4 @@
+import { backendApi, API_BASE_URL } from "../../api/backendApi";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Typography, Button, TextField, Stack, Paper, Chip, IconButton, Divider, Tooltip } from "@mui/material";
@@ -42,11 +43,7 @@ function AreaHitlContent({ sessionId }: { sessionId: string }) {
   const { currentState: humanOutput, pushState: setHumanOutput, undo, redo, canUndo, canRedo, resetHistory } = useHitlHistory<any>(null);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(await res.text());
-        return res.json();
-      })
+    backendApi.getInternalReviewDetail(sessionId!)
       .then(json => {
         setData(json);
         const pipelineData = json.pipeline_data || {};
@@ -69,15 +66,13 @@ function AreaHitlContent({ sessionId }: { sessionId: string }) {
   }, [sessionId, resetHistory]);
 
   const handleSave = async (dataToSave: any) => {
-    await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/area`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      await backendApi.saveAreaReview(sessionId!, {
         decision: "save_assessment",
         corrections: dataToSave,
         reviewer: "System Admin"
-      })
-    });
+      });
+    } catch (err) {}
   };
 
   const { status: saveStatus, lastSaved, forceSave } = useHitlAutosave({
@@ -89,14 +84,10 @@ function AreaHitlContent({ sessionId }: { sessionId: string }) {
   const handleDecision = async (decision: string) => {
     try {
       await forceSave(humanOutput); 
-      await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/area`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          decision,
-          corrections: humanOutput,
-          reviewer: "System Admin"
-        })
+      await backendApi.saveAreaReview(sessionId!, {
+        decision,
+        corrections: humanOutput,
+        reviewer: "System Admin"
       });
       if (decision === "assess_continue") {
         navigate("/internal/review");
@@ -106,7 +97,7 @@ function AreaHitlContent({ sessionId }: { sessionId: string }) {
     }
   };
 
-  const defectKeys = humanOutput ? Object.keys(humanOutput) : [];
+  const defectKeys = React.useMemo(() => humanOutput ? Object.keys(humanOutput) : [], [humanOutput]);
   
   useEffect(() => {
     if (currentDefectIndex >= 0 && currentDefectIndex < defectKeys.length) {
@@ -167,7 +158,7 @@ function AreaHitlContent({ sessionId }: { sessionId: string }) {
         framePath = actualPath;
       } else {
         const parts = actualPath.split("outputs");
-        if (parts.length > 1) framePath = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, '/')}`;
+        if (parts.length > 1) framePath = `/outputs${parts[1].replace(/\\/g, '/')}`;
       }
     }
   const imageName = actualPath ? actualPath.split(/\\|\//).pop() : "";
@@ -262,31 +253,26 @@ function AreaHitlContent({ sessionId }: { sessionId: string }) {
           pointsNested.push([homographyPoints[i], homographyPoints[i+1]]);
       }
 
-      setIsRecalculating(true);
-      try {
-          const response = await fetch(`http://127.0.0.1:8000/api/v1/internal/reviews/${sessionId}/area/recalculate`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                  defect_id: currentDefectId,
-                  image_name: imageName,
-                  homography_points: pointsNested
-              })
-          });
-          const result = await response.json();
-          if (result.status === "success") {
-              setHumanOutput(result.data);
-              setIsDrawingHomography(false);
-              setHomographyPoints([]);
-          } else {
-              alert("Recalculation failed: " + result.detail);
-          }
-      } catch (err) {
-          console.error(err);
-          alert("Error during recalculation.");
-      } finally {
-          setIsRecalculating(false);
-      }
+        setIsRecalculating(true);
+        try {
+            const result = await backendApi.recalculateAreaReview(sessionId!, {
+                defect_id: currentDefectId,
+                image_name: imageName,
+                homography_points: pointsNested
+            }) as any;
+            if (result.status === "success") {
+                setHumanOutput(result.data);
+                setIsDrawingHomography(false);
+                setHomographyPoints([]);
+            } else {
+                alert("Recalculation failed: " + result.detail);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error communicating with server.");
+        } finally {
+            setIsRecalculating(false);
+        }
   };
 
 
@@ -403,7 +389,7 @@ function AreaHitlContent({ sessionId }: { sessionId: string }) {
               const actualP = defect?.best_frame_path || defect?.frame_path;
               if (actualP) {
                   if (actualP.startsWith("http://") || actualP.startsWith("https://")) p = actualP; else { const parts = actualP.split("outputs");
-                  if (parts.length > 1) p = `http://127.0.0.1:8000/outputs${parts[1].replace(/\\/g, "/")}`; }
+                  if (parts.length > 1) p = `/outputs${parts[1].replace(/\\/g, "/")}`; }
               }
               const isSelected = key === currentDefectId;
               

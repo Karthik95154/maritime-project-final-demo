@@ -17,8 +17,13 @@ export function HumanInLoopPage() {
   });
 
   const queue = queueQuery.data ?? [];
-  const pendingReviews = queue.filter(item => item.reviewStatus === "pending" || item.status === "assessment_in_progress" || item.status === "awaiting_review");
-  const historyReviews = queue.filter(item => item.reviewStatus !== "pending" && item.status !== "assessment_in_progress" && item.status !== "awaiting_review");
+  const pendingReviews = queue.filter(item => 
+    (item.reviewStatus === "pending" || item.status === "assessment_in_progress" || item.status === "awaiting_review")
+    && item.status !== "Failed" 
+    && item.status !== "error"
+    && item.status !== "Completed"
+  );
+  const historyReviews = queue.filter(item => !pendingReviews.includes(item));
   const displayList = activeTab === 0 ? pendingReviews : historyReviews;
 
   const handleSelect = (item: any) => {
@@ -30,7 +35,6 @@ export function HumanInLoopPage() {
     else if (cp === "segmentation_review") route = "segmentation";
     else if (cp === "area_review") route = "area";
     else if (cp === "cost_review") route = "cost";
-    else if (cp === "report_review") route = "report";
 
     if (route) {
       navigate(`/internal/${route}/${item.sessionId}`);
@@ -163,9 +167,9 @@ export function HumanInLoopPage() {
                       </Button>
                     ) : (
                       <Chip 
-                        label={item.reviewStatus === "rejected" ? "Rejected" : "Completed"} 
+                        label={item.status === "Failed" ? "Failed" : item.status === "error" ? "Error" : item.reviewStatus === "rejected" ? "Rejected" : "Completed"} 
                         size="small" 
-                        color={item.reviewStatus === "rejected" ? "error" : "success"}
+                        color={item.status === "Failed" || item.status === "error" ? "error" : item.reviewStatus === "rejected" ? "warning" : "success"}
                         variant="outlined"
                       />
                     )}
