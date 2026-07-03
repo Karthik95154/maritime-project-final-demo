@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, RedirectResponse
 import os
+import shutil
+import subprocess
 from dependencies.services import get_inspection_service
 from services.inspection_service import InspectionService
 from dependencies.services import get_analysis_session_service, get_drydock_visit_service
@@ -10,6 +12,46 @@ from fastapi import Depends
 from models import InspectionSession
 from modules.document_generation_module import DocumentGenerationModule
 router = APIRouter()
+
+
+def _convert_docx_to_pdf(docx_path: str, pdf_path: str) -> None:
+    if os.name == "nt":
+        import pythoncom
+        pythoncom.CoInitialize()
+        try:
+            from docx2pdf import convert
+            convert(os.path.abspath(docx_path), os.path.abspath(pdf_path))
+        finally:
+            pythoncom.CoUninitialize()
+        return
+
+    soffice_binary = shutil.which("soffice") or shutil.which("libreoffice")
+    if not soffice_binary:
+        raise RuntimeError("LibreOffice headless binary not found")
+
+    output_dir = os.path.dirname(os.path.abspath(pdf_path))
+    subprocess.run(
+        [
+            soffice_binary,
+            "--headless",
+            "--convert-to",
+            "pdf",
+            "--outdir",
+            output_dir,
+            os.path.abspath(docx_path),
+        ],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    generated_pdf = os.path.join(
+        output_dir,
+        f"{os.path.splitext(os.path.basename(docx_path))[0]}.pdf",
+    )
+    if generated_pdf != os.path.abspath(pdf_path) and os.path.exists(generated_pdf):
+        os.replace(generated_pdf, pdf_path)
 
 @router.get("/download/{session_id}")
 async def download_report(session_id: str, inspection_service: InspectionService = Depends(get_inspection_service)):
@@ -67,13 +109,7 @@ async def download_report_pdf(session_id: str, attachment: bool = False, inspect
     
     if not os.path.exists(pdf_path):
         try:
-            import pythoncom
-            pythoncom.CoInitialize()
-            try:
-                from docx2pdf import convert
-                convert(os.path.abspath(docx_path), os.path.abspath(pdf_path))
-            finally:
-                pythoncom.CoUninitialize()
+            _convert_docx_to_pdf(docx_path, pdf_path)
         except Exception as e:
             return {"error": f"Failed to generate PDF: {e}"}
 
@@ -178,13 +214,7 @@ async def download_batch_report_pdf(batch_id: str, attachment: bool = False, ins
 
     if not os.path.exists(output_pdf_path):
         try:
-            import pythoncom
-            pythoncom.CoInitialize()
-            try:
-                from docx2pdf import convert
-                convert(os.path.abspath(output_docx_path), os.path.abspath(output_pdf_path))
-            finally:
-                pythoncom.CoUninitialize()
+            _convert_docx_to_pdf(output_docx_path, output_pdf_path)
         except Exception as e:
             return {"error": f"Failed to generate PDF: {e}"}
 

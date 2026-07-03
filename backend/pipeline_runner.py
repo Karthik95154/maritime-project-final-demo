@@ -477,8 +477,8 @@ def recalculate_area_with_manual_homography(session_folder, defect_id, homograph
     session_id = os.path.basename(os.path.normpath(session_folder))
     
     # Write manual values to the main_pipeline_1 data folder so it gets picked up
-    mp1_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "main_pipeline_1", "main_pipeline_1"))
-    manual_dir = os.path.join(mp1_root, "data", "manual_image_values")
+    mp1_root = os.path.join(os.path.dirname(__file__), "modules", "main_pipeline_1")
+    manual_dir = os.path.join(mp1_root, "data", "manual_img_values")
     os.makedirs(manual_dir, exist_ok=True)
     
     manual_json_path = os.path.join(manual_dir, f"{image_name}.json")

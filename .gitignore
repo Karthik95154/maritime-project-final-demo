@@ -14,13 +14,13 @@ backend/outputs/
 backend/uploads/
 outputs/
 uploads/
-backend/final_models/
+
 backend/__pycache__/
 *.pyc
 
 # Debug files
 *.log
-*.txt
+
 backend.log
 grep_output.txt
 setters.txt

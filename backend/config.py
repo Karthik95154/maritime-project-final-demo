@@ -1,4 +1,6 @@
 import os
+
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -6,7 +8,10 @@ class Settings(BaseSettings):
     project_name: str = "Maritime Inspection API"
     
     # MongoDB Config
-    mongo_uri: str = "mongodb://localhost:27017/"
+    mongo_uri: str = Field(
+        default="mongodb://localhost:27017/",
+        validation_alias=AliasChoices("MONGODB_URI", "MONGO_URI", "mongo_uri"),
+    )
     mongo_db_name: str = "maritime_inspection2"
     
     # Security Config

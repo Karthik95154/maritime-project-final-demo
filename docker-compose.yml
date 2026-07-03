@@ -23,7 +23,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: maritime_frontend
     environment:
-      - VITE_API_URL=http://api:8000
+      - VITE_API_BASE_URL=http://api:8000
     networks:
       - maritime_net
 
@@ -33,12 +33,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - MONGO_URI=mongodb://admin:secure_password@mongodb:27017
+      - MONGODB_URI=mongodb://admin:secure_password@mongodb:27017
     # Note: no container_name here so we can scale this service!
     ports:
       - "8000" # Let Docker randomly assign host ports for load balancing
     volumes:
-      - ./backend_enterprise:/app
+      - ./backend:/app
     depends_on:
       - mongodb
     networks:
