@@ -53,7 +53,7 @@ async def shutdown_db_client():
     await close_mongo_connection()
 
 
-# Configure CORS to allow frontend connections from any cloud provider (Vercel, Render, Netlify, etc.)
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -61,12 +61,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "*"]) # Change * in production
 
-app.add_middleware(BaseHTTPMiddleware, dispatch=audit_middleware)
-app.add_middleware(BaseHTTPMiddleware, dispatch=logging_middleware)
-app.add_middleware(BaseHTTPMiddleware, dispatch=global_exception_middleware)
-app.add_middleware(BaseHTTPMiddleware, dispatch=request_id_middleware)
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["localhost", "127.0.0.1", "*"]
+)
+
+# TEMPORARILY DISABLE CUSTOM MIDDLEWARE
+# app.add_middleware(BaseHTTPMiddleware, dispatch=audit_middleware)
+# app.add_middleware(BaseHTTPMiddleware, dispatch=logging_middleware)
+# app.add_middleware(BaseHTTPMiddleware, dispatch=global_exception_middleware)
+# app.add_middleware(BaseHTTPMiddleware, dispatch=request_id_middleware)
 
 
 api_router = APIRouter(prefix=settings.api_v1_str)
