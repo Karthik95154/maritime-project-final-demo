@@ -58,6 +58,8 @@ export function InspectionCenterPage() {
     uploadError,
     uploadLogs,
     currentStage,
+    uploadSessionId,
+    uploadStatusMessage,
     startInspectionUpload,
     resetInspection,
   } = useAppStore();
@@ -65,7 +67,7 @@ export function InspectionCenterPage() {
   const { data: historyData } = useQuery({
     queryKey: ["historical-inspections"],
     queryFn: backendApi.getHistoricalInspections,
-    refetchInterval: 3000,
+    refetchInterval: 10000,
   });
 
   const deleteMutation = useMutation({
@@ -75,6 +77,8 @@ export function InspectionCenterPage() {
 
   const isUploading = uploadStatus === "uploading";
   const showPipeline = uploadStatus !== "idle";
+  const isAwaitingReview = uploadStatus === "awaiting_review";
+  const isQueued = uploadStatus === "queued";
 
   useEffect(() => {
     const imo = searchParams.get("imoNumber");
@@ -528,6 +532,15 @@ export function InspectionCenterPage() {
                             : currentStage || PIPELINE_STAGES[stageIndex]?.title}
                       </Typography>
                       <Stack direction="row" alignItems="center" gap={2}>
+                        {uploadSessionId && (
+                          <Button
+                            variant="outlined"
+                            color="inherit"
+                            onClick={() => navigate(`/inspections/${uploadSessionId}/progress`)}
+                          >
+                            View Progress
+                          </Button>
+                        )}
                         {uploadStatus === "success" && completedBatchId && (
                           <Button 
                             variant="contained" 
@@ -558,6 +571,22 @@ export function InspectionCenterPage() {
                         }} 
                       />
                     </Box>
+                    {uploadStatusMessage && (
+                      <Typography variant="body2" sx={{ color: uploadStatus === "error" ? "error.main" : "rgba(255,255,255,0.92)" }}>
+                        {uploadStatusMessage}
+                      </Typography>
+                    )}
+                    {isQueued && (
+                      <Chip label="Queued" sx={{ alignSelf: "flex-start", bgcolor: "rgba(251,191,36,0.2)", color: "#FDE68A" }} />
+                    )}
+                    {isAwaitingReview && (
+                      <Chip label="Awaiting HITL Review" sx={{ alignSelf: "flex-start", bgcolor: "rgba(56,189,248,0.18)", color: "#BAE6FD" }} />
+                    )}
+                    {uploadError && (
+                      <Typography variant="body2" color="error.main">
+                        {uploadError}
+                      </Typography>
+                    )}
                   </Stack>
                 </Box>
               )}

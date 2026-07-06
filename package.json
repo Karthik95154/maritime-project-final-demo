@@ -3,7 +3,12 @@
   "private": true,
   "scripts": {
     "start": "powershell -ExecutionPolicy Bypass -File ./start-maritimeinspect.ps1",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload"
+    "dev:frontend": "cd frontend && npm run dev -- --host 0.0.0.0 --port 5173",
+    "dev:hitl": "cd frontend && npm run dev -- --host 0.0.0.0 --port 5174",
+    "dev:backend": "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
+    "dev:local": "powershell -ExecutionPolicy Bypass -File ./start-maritimeinspect.ps1 -StartHitl",
+    "run:all": "powershell -ExecutionPolicy Bypass -File ./start-maritimeinspect.ps1 -StartHitl -FrontendMode preview",
+    "dev:tunnel": "powershell -ExecutionPolicy Bypass -File ./start-frontend-tunnel.ps1",
+    "preview:tunnel": "powershell -ExecutionPolicy Bypass -File ./start-frontend-preview.ps1"
   }
 }

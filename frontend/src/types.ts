@@ -79,6 +79,7 @@ export interface DashboardResponse {
 export interface InspectionProgressResponse extends InspectionSessionSummary {
   steps: Array<{ label: string; status: "done" | "active" | "todo" }>;
   logs: ProgressLog[];
+  statusMessage?: string;
 }
 
 export interface DefectListResponse extends InspectionSessionSummary {

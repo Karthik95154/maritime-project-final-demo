@@ -7,6 +7,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from loguru import logger
 
 from models import InspectionSession, Vessel, DryDockVisit, AnalysisSession
 from pipeline_runner import run_pipeline, run_batch_pipeline
@@ -157,8 +158,15 @@ async def predict_videos(
             # Reset file pointer
             video.file.seek(0)
             file_bytes = video.file.read()
-            public_url = supabase_service.upload_bytes(file_bytes, f"videos/{session_id}_{video.filename}", video.content_type)
-            remote_video_urls.append(public_url)
+            try:
+                public_url = supabase_service.upload_bytes(
+                    file_bytes,
+                    f"videos/{session_id}_{video.filename}",
+                    video.content_type,
+                )
+                remote_video_urls.append(public_url)
+            except Exception as exc:
+                logger.warning(f"[{session_id}] Supabase upload failed for '{video.filename}': {exc}. Falling back to local path.")
             
     # Use remote URLs if available for the DB so frontend can access them
     db_video_paths = remote_video_urls if remote_video_urls else video_paths

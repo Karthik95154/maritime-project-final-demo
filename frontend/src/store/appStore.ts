@@ -40,11 +40,13 @@ interface AppState {
   setInspectionForm: (form: InspectionForm | ((prev: InspectionForm) => InspectionForm)) => void;
   inspectionVideos: SelectedVideo[];
   setInspectionVideos: (videos: SelectedVideo[] | ((prev: SelectedVideo[]) => SelectedVideo[])) => void;
-  uploadStatus: "idle" | "uploading" | "success" | "error";
+  uploadStatus: "idle" | "uploading" | "queued" | "awaiting_review" | "success" | "error";
   uploadProgress: number;
   uploadError: string | null;
   uploadLogs: string[];
   currentStage: string;
+  uploadSessionId: string | null;
+  uploadStatusMessage: string | null;
   startInspectionUpload: (onSuccess: (batchId: string) => void) => Promise<void>;
   resetInspection: () => void;
 }
@@ -121,6 +123,8 @@ export const useAppStore = create<AppState>()(
       uploadError: null,
       uploadLogs: [],
       currentStage: "",
+      uploadSessionId: null,
+      uploadStatusMessage: null,
 
       startInspectionUpload: async (onSuccess) => {
         const { inspectionForm, inspectionVideos } = get();
@@ -129,7 +133,15 @@ export const useAppStore = create<AppState>()(
           return;
         }
 
-        set({ uploadStatus: "uploading", uploadProgress: 0, uploadError: null, uploadLogs: [], currentStage: "Uploading files..." });
+        set({
+          uploadStatus: "uploading",
+          uploadProgress: 0,
+          uploadError: null,
+          uploadLogs: [],
+          currentStage: "Uploading files...",
+          uploadSessionId: null,
+          uploadStatusMessage: "Uploading videos to the backend.",
+        });
 
         try {
           const payload = {
@@ -145,7 +157,16 @@ export const useAppStore = create<AppState>()(
           
           const batchId = result.batch_id;
           const sessionId = result.session_ids[0];
-          set({ uploadLogs: ["Files uploaded successfully. Connecting to inspection pipeline..."] });
+          set({
+            uploadStatus: "queued",
+            uploadSessionId: sessionId,
+            currentStage: "Queued",
+            uploadStatusMessage: "Upload complete. Your inspection is queued and waiting for the pipeline worker.",
+            uploadLogs: [
+              "Files uploaded successfully.",
+              "Inspection queued for AI processing.",
+            ],
+          });
           
           // Step 2: Poll backend progress (robust HTTP polling instead of SSE)
           const pollInterval = setInterval(async () => {
@@ -154,37 +175,77 @@ export const useAppStore = create<AppState>()(
               
               set((state) => {
                 const newLogs = [...state.uploadLogs];
-                const logLine = `Currently processing: ${data.currentStage || "Processing"}`;
+                const status = data.status?.toLowerCase();
+                const stage = data.currentStage || "Processing";
+                const reviewCheckpoint = data.reviewCheckpoint?.replace(/_/g, " ");
+                const statusMessage =
+                  status === "awaiting_review"
+                    ? `AI is paused for ${reviewCheckpoint || "human review"}. Continue it from the HITL console.`
+                    : status === "processing" && stage === "Queued"
+                      ? "Upload complete. Waiting in queue for the pipeline worker."
+                      : status === "processing"
+                        ? `AI pipeline is running: ${stage}.`
+                        : status === "completed"
+                          ? "Inspection analysis completed successfully."
+                          : stage;
+                const logLine =
+                  status === "awaiting_review"
+                    ? `Awaiting review: ${reviewCheckpoint || stage}`
+                    : `Current status: ${stage}`;
                 if (newLogs[newLogs.length - 1] !== logLine) {
                   newLogs.push(logLine);
                 }
                 
                 return {
                   // Pipeline progress represents 10% to 100%
-                  uploadProgress: 10 + Math.round(data.progress * 0.9),
+                  uploadProgress: Math.max(state.uploadProgress, 10 + Math.round(data.progress * 0.9)),
                   currentStage: data.currentStage,
+                  uploadStatus:
+                    status === "awaiting_review"
+                      ? "awaiting_review"
+                      : status === "processing" && stage === "Queued"
+                        ? "queued"
+                        : state.uploadStatus === "success"
+                          ? "success"
+                          : "uploading",
+                  uploadStatusMessage: statusMessage,
                   uploadLogs: newLogs,
                 };
               });
               
               const status = data.status?.toLowerCase();
               if (status === "completed") {
-                set({ uploadStatus: "success", uploadProgress: 100 });
+                set({
+                  uploadStatus: "success",
+                  uploadProgress: 100,
+                  uploadStatusMessage: "Inspection analysis completed successfully.",
+                });
                 clearInterval(pollInterval);
                 onSuccess(batchId);
               } else if (status === "error" || status === "failed") {
-                set({ uploadStatus: "error", uploadError: "Pipeline execution failed. Check logs." });
+                set({
+                  uploadStatus: "error",
+                  uploadError: "Pipeline execution failed. Check logs.",
+                  uploadStatusMessage: "The AI pipeline failed after upload. Review the latest logs and backend output.",
+                });
                 clearInterval(pollInterval);
               }
             } catch (err) {
               console.error("Polling error:", err);
+              set((state) => ({
+                uploadStatusMessage:
+                  state.uploadStatus === "awaiting_review"
+                    ? state.uploadStatusMessage
+                    : "Upload succeeded, but live status polling is temporarily unavailable. You can still check progress from the inspections list.",
+              }));
             }
           }, 2000);
           
         } catch (err) {
           set({ 
             uploadStatus: "error", 
-            uploadError: err instanceof Error ? err.message : "An unexpected error occurred" 
+            uploadError: err instanceof Error ? err.message : "An unexpected error occurred",
+            uploadStatusMessage: "The upload request failed before the AI pipeline could start.",
           });
         }
       },
@@ -203,6 +264,8 @@ export const useAppStore = create<AppState>()(
           uploadError: null,
           uploadLogs: [],
           currentStage: "",
+          uploadSessionId: null,
+          uploadStatusMessage: null,
         });
       },
     }),

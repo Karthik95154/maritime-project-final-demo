@@ -58,20 +58,39 @@ function toNumber(value: unknown) {
 }
 
 function normalizeItem(item: any, defaultCurrency: string) {
-  const requiredQuantity = toNumber(item?.required_quantity ?? item?.quantity ?? item?.quantity_per_sqm ?? 0);
+  const quantityPerSqm = toNumber(item?.quantity_per_sqm ?? 0);
+  const requiredQuantity = toNumber(item?.required_quantity ?? item?.quantity ?? quantityPerSqm ?? 0);
   const unitCost = toNumber(item?.unit_cost ?? item?.cost ?? 0);
-  const totalCost = toNumber(item?.total_cost) || requiredQuantity * unitCost;
+  const explicitTotalCost = item?.total_cost;
+  const totalCost =
+    explicitTotalCost === undefined || explicitTotalCost === null || explicitTotalCost === ""
+      ? requiredQuantity * unitCost
+      : requiredQuantity * unitCost;
 
   return {
     item_name: item?.item_name || item?.name || "New Item",
     metrics: item?.metrics || item?.unit || "pcs",
-    quantity_per_sqm: toNumber(item?.quantity_per_sqm ?? 0),
+    quantity_per_sqm: quantityPerSqm,
     required_quantity: requiredQuantity,
     unit_cost: unitCost,
     currency: item?.currency || defaultCurrency,
     total_cost: totalCost,
   };
 }
+
+const inputCellSx = {
+  minWidth: 96,
+  "& .MuiOutlinedInput-root": {
+    bgcolor: "#ffffff",
+  },
+};
+
+const itemNameInputSx = {
+  minWidth: 220,
+  "& .MuiOutlinedInput-root": {
+    bgcolor: "#ffffff",
+  },
+};
 
 function categorizeItem(itemName: string) {
   const normalized = String(itemName || "").toLowerCase();
@@ -385,31 +404,33 @@ function CostHitlContent({ sessionId }: { sessionId: string }) {
                               options={COMMON_REPAIR_ITEMS}
                               value={item.item_name || ""}
                               onChange={(_, newValue) => handleUpdateItem(defectId, idx, 'item_name', newValue || "")}
+                              sx={itemNameInputSx}
                               renderInput={(params) => (
                                 <TextField
                                   {...params}
                                   value={item.item_name || ""}
                                   onChange={(e) => handleUpdateItem(defectId, idx, "item_name", e.target.value)}
+                                  size="small"
                                 />
                               )}
                             />
                           </TableCell>
                           <TableCell>
-                            <TextField size="small" value={item.metrics || ""} onChange={(e) => handleUpdateItem(defectId, idx, 'metrics', e.target.value)} />
+                            <TextField size="small" sx={inputCellSx} value={item.metrics || ""} onChange={(e) => handleUpdateItem(defectId, idx, 'metrics', e.target.value)} />
                           </TableCell>
                           <TableCell>
-                            <TextField size="small" type="number" value={item.quantity_per_sqm ?? 0} onChange={(e) => handleUpdateItem(defectId, idx, 'quantity_per_sqm', e.target.value)} />
+                            <TextField size="small" sx={inputCellSx} type="number" value={item.quantity_per_sqm ?? 0} onChange={(e) => handleUpdateItem(defectId, idx, 'quantity_per_sqm', e.target.value)} />
                           </TableCell>
                           <TableCell>
-                            <TextField size="small" type="number" value={item.required_quantity} onChange={(e) => handleUpdateItem(defectId, idx, 'required_quantity', e.target.value)} />
+                            <TextField size="small" sx={inputCellSx} type="number" value={item.required_quantity} onChange={(e) => handleUpdateItem(defectId, idx, 'required_quantity', e.target.value)} />
                           </TableCell>
                           <TableCell>
-                            <TextField size="small" type="number" value={item.unit_cost} onChange={(e) => handleUpdateItem(defectId, idx, 'unit_cost', e.target.value)} />
+                            <TextField size="small" sx={inputCellSx} type="number" value={item.unit_cost} onChange={(e) => handleUpdateItem(defectId, idx, 'unit_cost', e.target.value)} />
                           </TableCell>
                           <TableCell>
-                            <TextField size="small" value={item.currency || ""} onChange={(e) => handleUpdateItem(defectId, idx, 'currency', e.target.value)} />
+                            <TextField size="small" sx={inputCellSx} value={item.currency || ""} onChange={(e) => handleUpdateItem(defectId, idx, 'currency', e.target.value)} />
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>
+                          <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", color: "primary.main" }}>
                             {formatMoney(item.total_cost, item.currency || currency)}
                           </TableCell>
                           <TableCell>

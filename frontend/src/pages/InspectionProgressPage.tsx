@@ -26,6 +26,15 @@ export function InspectionProgressPage() {
 
   if (!data) return null;
 
+  const activeStepLabel = data.steps.find((s) => s.status === "active")?.label || "Processing Complete";
+  const statusMessage =
+    data.statusMessage ||
+    (data.status?.toLowerCase() === "awaiting_review"
+      ? "The AI pipeline is paused for human review in the HITL console."
+      : data.status?.toLowerCase() === "processing" && data.currentStage === "Queued"
+        ? "Your upload is complete and waiting for the pipeline worker."
+        : "The pipeline is processing this inspection.");
+
   return (
     <Stack spacing={2}>
       <Typography variant="caption" color="text.secondary">
@@ -54,7 +63,7 @@ export function InspectionProgressPage() {
               <Stack spacing={1.5}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="body1" fontWeight={700}>
-                    {data.steps.find((s) => s.status === "active")?.label || "Processing Complete"}
+                    {activeStepLabel}
                   </Typography>
                   <Typography variant="h6" fontWeight={700} color="secondary.main">
                     {data.progress}%
@@ -71,6 +80,9 @@ export function InspectionProgressPage() {
                     }
                   }} 
                 />
+                <Typography variant="body2" color="text.secondary">
+                  {statusMessage}
+                </Typography>
               </Stack>
             </Box>
           </SectionCard>

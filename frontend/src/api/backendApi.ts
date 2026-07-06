@@ -13,8 +13,7 @@ import type {
   VisualizationResponse,
 } from "../types";
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "https://resplendent-trust-production-8833.up.railway.app";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);

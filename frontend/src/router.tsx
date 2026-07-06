@@ -42,9 +42,14 @@ import { MaintenancePlanningPage } from "./pages/admin/MaintenancePlanningPage";
 import { FinancialIntelligencePage } from "./pages/admin/FinancialIntelligencePage";
 import { ExecutiveReportsPage } from "./pages/admin/ExecutiveReportsPage";
 import { OrgManagementPage } from "./pages/admin/OrgManagementPage";
+
+const isHitlMode = import.meta.env.VITE_APP_MODE === "hitl";
+const rootElement = isHitlMode ? <Navigate to="/internal/review" replace /> : <LandingPage />;
+const loginElement = isHitlMode ? <Navigate to="/internal/login" replace /> : <LoginPage />;
+
 export const appRouter = createBrowserRouter([
-  { path: "/", element: <LandingPage />, errorElement: <GlobalErrorElement /> },
-  { path: "/login", element: <LoginPage />, errorElement: <GlobalErrorElement /> },
+  { path: "/", element: rootElement, errorElement: <GlobalErrorElement /> },
+  { path: "/login", element: loginElement, errorElement: <GlobalErrorElement /> },
   { path: "/internal/login", element: <InternalReviewLoginPage />, errorElement: <GlobalErrorElement /> },
   {
     errorElement: <GlobalErrorElement />,
@@ -110,5 +115,5 @@ export const appRouter = createBrowserRouter([
       { path: "", element: <Navigate to="/internal/review" replace /> },
     ],
   },
-  { path: "*", element: <Navigate to="/" replace /> },
+  { path: "*", element: <Navigate to={isHitlMode ? "/internal/review" : "/"} replace /> },
 ]);
