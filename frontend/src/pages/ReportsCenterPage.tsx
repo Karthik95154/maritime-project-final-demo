@@ -2,7 +2,7 @@ import { Box, Button, Grid, Stack, Typography, Chip, IconButton, Tooltip, Linear
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Download, FileText, Share2, ShieldCheck, Search, FileBadge, Trash2 } from "lucide-react";
-import { backendApi } from "../api/backendApi";
+import { backendApi, getAssetUrl } from "../api/backendApi";
 import { SectionCard } from "../components/SectionCard";
 import { useState } from "react";
 
@@ -36,6 +36,9 @@ export function ReportsCenterPage() {
     report.vesselName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     report.imoNumber.includes(searchTerm)
   );
+
+  const formatInr = (value: number) =>
+    `INR ${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
   return (
     <Stack spacing={3}>
@@ -122,7 +125,7 @@ export function ReportsCenterPage() {
                     <Grid size={{ xs: 6 }}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.default', borderRadius: 2 }}>
                         <Typography variant="caption" color="text.secondary" display="block">Est. Cost</Typography>
-                        <Typography variant="h6" fontWeight={700}>₹ {((report.defectCount || 0) * 150000).toLocaleString()}</Typography>
+                        <Typography variant="h6" fontWeight={700}>{formatInr(report.totalEstimatedCost || 0)}</Typography>
                       </Box>
                     </Grid>
                   </Grid>
@@ -137,7 +140,13 @@ export function ReportsCenterPage() {
                       View Report
                     </Button>
                     <Tooltip title="Download PDF">
-                      <IconButton color="primary" sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                      <IconButton
+                        color="primary"
+                        component="a"
+                        href={getAssetUrl(`/api/v1/download/${report.sessionId}/pdf?attachment=true`)}
+                        download
+                        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+                      >
                         <Download size={18} />
                       </IconButton>
                     </Tooltip>

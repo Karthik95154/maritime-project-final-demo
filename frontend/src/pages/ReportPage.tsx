@@ -11,6 +11,16 @@ import { ImagePreviewModal } from "../components/ImagePreviewModal";
 import { Sparkles, X } from "lucide-react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, IconButton } from "@mui/material";
 
+function formatInr(value: number) {
+  return `INR ${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+function getRiskLevel(criticalDefects: number, defectCount: number) {
+  if (criticalDefects >= 3 || defectCount >= 8) return "High";
+  if (criticalDefects >= 1 || defectCount >= 3) return "Medium";
+  return "Low";
+}
+
 export function ReportContent({ batchId, sessionId, hideHeader }: { batchId?: string, sessionId?: string, hideHeader?: boolean }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
@@ -33,8 +43,9 @@ export function ReportContent({ batchId, sessionId, hideHeader }: { batchId?: st
   if (!data) return null;
 
   const reportData = data as InspectionReportResponse | BatchReportResponse;
-  const batchReportData = isBatchReport ? (reportData as BatchReportResponse) : null;
-  const singleReportData = !isBatchReport ? (reportData as InspectionReportResponse) : null;
+  const healthScore = reportData.healthScore ?? 0;
+  const totalEstimatedCost = reportData.totalEstimatedCost ?? 0;
+  const riskLevel = getRiskLevel(reportData.criticalDefects ?? 0, reportData.defectCount ?? 0);
 
   const handleExplain = async (defectId: string) => {
     if (!sessionId) return;
@@ -116,15 +127,21 @@ export function ReportContent({ batchId, sessionId, hideHeader }: { batchId?: st
             <Stack spacing={2}>
               <Box>
                 <Typography variant="caption" color="text.secondary">Health Score</Typography>
-                <Typography variant="h4" fontWeight={800} color="primary.main">85/100</Typography>
+                <Typography variant="h4" fontWeight={800} color="primary.main">{healthScore}/100</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary">Risk Level</Typography>
-                <Typography variant="h5" fontWeight={700} color="warning.main">Medium</Typography>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  color={riskLevel === "High" ? "error.main" : riskLevel === "Medium" ? "warning.main" : "success.main"}
+                >
+                  {riskLevel}
+                </Typography>
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary">Est. Cost Exposure</Typography>
-                <Typography variant="h5" fontWeight={700} color="error.main">₹ 4,50,000</Typography>
+                <Typography variant="h5" fontWeight={700} color="error.main">{formatInr(totalEstimatedCost)}</Typography>
               </Box>
             </Stack>
           </Box>
@@ -183,7 +200,7 @@ export function ReportContent({ batchId, sessionId, hideHeader }: { batchId?: st
                       {defect.severity.toUpperCase()}
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>${defect.repairCost.toLocaleString()}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{formatInr(defect.repairCost)}</TableCell>
                   <TableCell align="right">
                     <Button 
                       size="small" 

@@ -155,11 +155,11 @@ export const backendApi = {
     }),
   getBatches: () =>
     requestJson<any[]>("/api/v1/batches"),
-  getVessels: () => requestJson<any[]>("/api/v1/vessels"),
+  getVessels: () => requestJson<any[]>("/api/v1/vessels/"),
   getVessel: (imoNumber: string) => requestJson<any>(`/api/v1/vessels/${imoNumber}`),
   getVesselVisits: (imoNumber: string) => requestJson<any[]>(`/api/v1/vessels/${imoNumber}/visits`),
   getVesselDefects: (imoNumber: string) => requestJson<any[]>(`/api/v1/vessels/${imoNumber}/defects`),
-  getAllDefects: () => requestJson<any[]>("/api/v1/defects"),
+  getAllDefects: () => requestJson<any[]>("/api/v1/defects/"),
   deleteVessel: (imoNumber: string) =>
     requestJson<{status: string, message: string}>(`/api/v1/vessels/${imoNumber}`, { method: "DELETE" }),
   deleteInspection: (sessionId: string) =>

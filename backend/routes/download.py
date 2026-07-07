@@ -11,6 +11,7 @@ from services.drydock_visit_service import DrydockVisitService
 from fastapi import Depends
 from models import InspectionSession
 from modules.document_generation_module import DocumentGenerationModule
+from services.session_views import load_outputs
 router = APIRouter()
 
 
@@ -52,6 +53,18 @@ def _convert_docx_to_pdf(docx_path: str, pdf_path: str) -> None:
     )
     if generated_pdf != os.path.abspath(pdf_path) and os.path.exists(generated_pdf):
         os.replace(generated_pdf, pdf_path)
+
+
+def _collect_batch_repair_payloads(sessions: list[InspectionSession]) -> list[dict]:
+    payloads: list[dict] = []
+    for session in sessions:
+        outputs = load_outputs(session)
+        repair_payload = outputs.get("repair") or {}
+        if repair_payload.get("defect_repairs"):
+            enriched_payload = dict(repair_payload)
+            enriched_payload["vessel_name"] = session.vessel_name or enriched_payload.get("vessel_name")
+            payloads.append(enriched_payload)
+    return payloads
 
 @router.get("/download/{session_id}")
 async def download_report(session_id: str, inspection_service: InspectionService = Depends(get_inspection_service)):
@@ -141,24 +154,19 @@ async def download_batch_report(batch_id: str, inspection_service: InspectionSer
     
     output_dir = os.path.join("outputs", "batches", batch_id)
     output_docx_path = os.path.join(output_dir, "combined_vessel_inspection_report.docx")
-    
-    if not os.path.exists(output_docx_path):
-        imo_number = sessions[0].imo_number
-        if imo_number:
-            all_vessel_docs = await inspection_service.repo.find_many({"imo_number": imo_number}, sort=[("created_at", 1)])
-            all_sessions = [InspectionSession(**doc) for doc in all_vessel_docs]
-        else:
-            all_sessions = sessions
 
-        repair_json_paths = []
-        for session in all_sessions:
-            if session.output_path:
-                repair_json_paths.append(os.path.join(session.output_path, "module_5_repair_estimation_output", "repair_estimation_outputs.json"))
-        
-        vessel_name = all_sessions[0].vessel_name or "Combined Vessel Inspection"
-        
-        generator = DocumentGenerationModule()
-        generator.create_batch_report(batch_id, repair_json_paths, vessel_name)
+    imo_number = sessions[0].imo_number
+    if imo_number:
+        all_vessel_docs = await inspection_service.repo.find_many({"imo_number": imo_number}, sort=[("created_at", 1)])
+        all_sessions = [InspectionSession(**doc) for doc in all_vessel_docs]
+    else:
+        all_sessions = sessions
+
+    repair_payloads = _collect_batch_repair_payloads(all_sessions)
+    vessel_name = all_sessions[0].vessel_name or "Combined Vessel Inspection"
+
+    generator = DocumentGenerationModule()
+    generator.create_batch_report_from_payloads(batch_id, repair_payloads, vessel_name)
         
     if not os.path.exists(output_docx_path):
          return {"error": "Failed to generate report"}
@@ -188,35 +196,27 @@ async def download_batch_report_pdf(batch_id: str, attachment: bool = False, ins
     output_dir = os.path.join("outputs", "batches", batch_id)
     output_docx_path = os.path.join(output_dir, "combined_vessel_inspection_report.docx")
     output_pdf_path = os.path.join(output_dir, "combined_vessel_inspection_report.pdf")
-    
-    if not os.path.exists(output_docx_path):
-        imo_number = sessions[0].imo_number
-        if imo_number:
-            # Fetch ALL sessions for this vessel to include in the report
-            all_vessel_docs = await inspection_service.repo.find_many({"imo_number": imo_number}, sort=[("created_at", 1)])
-            all_sessions = [InspectionSession(**doc) for doc in all_vessel_docs]
-        else:
-            all_sessions = sessions
 
-        repair_json_paths = []
-        for session in all_sessions:
-            if session.output_path:
-                repair_json_paths.append(os.path.join(session.output_path, "module_5_repair_estimation_output", "repair_estimation_outputs.json"))
-        
-        vessel_name = all_sessions[0].vessel_name or "Combined Vessel Inspection"
-        
-        from modules.document_generation_module import DocumentGenerationModule
-        generator = DocumentGenerationModule()
-        generator.create_batch_report(batch_id, repair_json_paths, vessel_name)
+    imo_number = sessions[0].imo_number
+    if imo_number:
+        all_vessel_docs = await inspection_service.repo.find_many({"imo_number": imo_number}, sort=[("created_at", 1)])
+        all_sessions = [InspectionSession(**doc) for doc in all_vessel_docs]
+    else:
+        all_sessions = sessions
+
+    repair_payloads = _collect_batch_repair_payloads(all_sessions)
+    vessel_name = all_sessions[0].vessel_name or "Combined Vessel Inspection"
+
+    generator = DocumentGenerationModule()
+    generator.create_batch_report_from_payloads(batch_id, repair_payloads, vessel_name)
         
     if not os.path.exists(output_docx_path):
          return {"error": "Failed to generate report"}
 
-    if not os.path.exists(output_pdf_path):
-        try:
-            _convert_docx_to_pdf(output_docx_path, output_pdf_path)
-        except Exception as e:
-            return {"error": f"Failed to generate PDF: {e}"}
+    try:
+        _convert_docx_to_pdf(output_docx_path, output_pdf_path)
+    except Exception as e:
+        return {"error": f"Failed to generate PDF: {e}"}
 
     if not os.path.exists(output_pdf_path):
         return {"error": "Failed to generate PDF"}

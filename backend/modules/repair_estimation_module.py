@@ -296,30 +296,29 @@ class RepairEstimationModule:
             )
 
             total_cost += item_total_cost
+            repair_items.append({
 
-        repair_items.append({
+                "item_name":
+                    item_name,
 
-            "item_name":
-                item_name,
+                "quantity_per_sqm":
+                    round(quantity_per_sqm, 2),
 
-            "quantity_per_sqm":
-                round(quantity_per_sqm, 2),
+                "metrics":
+                    item_data["metrics"],
 
-            "metrics":
-                item_data["metrics"],
+                "unit_cost":
+                    round(unit_cost, 2),
 
-            "unit_cost":
-                round(unit_cost, 2),
+                "required_quantity":
+                    round(required_quantity, 2),
 
-            "required_quantity":
-                round(required_quantity, 2),
+                "total_cost":
+                    round(item_total_cost, 2),
 
-            "total_cost":
-                round(item_total_cost, 2),
-
-            "currency":
-                self.currency
-        })
+                "currency":
+                    self.currency
+            })
 
 
         return {
