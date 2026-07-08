@@ -7,6 +7,7 @@ import { backendApi, getAssetUrl, API_BASE_URL } from "../api/backendApi";
 import { SectionCard } from "../components/SectionCard";
 import { SeverityChip } from "../components/SeverityChip";
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useAppStore } from "../store/appStore";
 
 function TabPanel(props: any) {
   const { children, value, index, ...other } = props;
@@ -57,7 +58,7 @@ function DefectRow({ defect }: { defect: any }) {
           <Typography variant="body2" fontWeight={600}>{defect.area?.toFixed(2)} m²</Typography>
         </TableCell>
         <TableCell align="right">
-          <Typography variant="body2" fontWeight={600}>₹ {defect.repairCost?.toLocaleString()}</Typography>
+          <Typography variant="body2" fontWeight={600}>IDR {defect.repairCost?.toLocaleString()}</Typography>
         </TableCell>
       </TableRow>
       <TableRow>
@@ -73,8 +74,8 @@ function DefectRow({ defect }: { defect: any }) {
                     <TableCell>Item</TableCell>
                     <TableCell>Description</TableCell>
                     <TableCell align="right">Quantity</TableCell>
-                    <TableCell align="right">Unit Cost (₹)</TableCell>
-                    <TableCell align="right">Total (₹)</TableCell>
+                    <TableCell align="right">Unit Cost (IDR)</TableCell>
+                    <TableCell align="right">Total (IDR)</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -109,6 +110,7 @@ export function VesselProfilePage() {
   const { imoNumber } = useParams<{ imoNumber: string }>();
   const [tabValue, setTabValue] = useState(0);
   const navigate = useNavigate();
+  const { user } = useAppStore();
 
   const [viewDocUrl, setViewDocUrl] = useState<string | null>(null);
 
@@ -304,7 +306,7 @@ export function VesselProfilePage() {
                     <Card variant="outlined" sx={{ bgcolor: 'error.50', borderColor: 'error.200' }}>
                       <CardContent>
                         <Typography variant="subtitle2" color="error.main" gutterBottom>Estimated Repair Cost</Typography>
-                        <Typography variant="h4" fontWeight={800} color="error.dark">₹ {estimatedRepairCost.toLocaleString()}</Typography>
+                        <Typography variant="h4" fontWeight={800} color="error.dark">IDR {estimatedRepairCost.toLocaleString()}</Typography>
                         <Typography variant="caption" color="error.main">Based on latest defect data</Typography>
                       </CardContent>
                     </Card>
@@ -455,7 +457,10 @@ export function VesselProfilePage() {
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} justifyContent="flex-end">
                             <Button 
-                              onClick={() => navigate(`/inspections/${doc.sessionId}/report`)} 
+                              onClick={() => {
+                                 const prefix = user?.isAdmin ? "/admin" : "";
+                                 navigate(`${prefix}/inspections/${doc.sessionId}/report`);
+                               }} 
                               startIcon={<Eye size={14} />} 
                               size="small" 
                               variant="outlined" 
@@ -493,8 +498,8 @@ export function VesselProfilePage() {
               <BarChart data={costTrendData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="year" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} tickFormatter={(val) => `₹${(val/100000).toFixed(1)}L`} />
-                <Tooltip cursor={{ fill: "rgba(0,0,0,0.05)" }} contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} formatter={(value: number) => [`₹ ${value.toLocaleString()}`, 'Estimated Cost']} />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={(val) => `IDR ${(val/100000).toFixed(1)}L`} />
+                <Tooltip cursor={{ fill: "rgba(0,0,0,0.05)" }} contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} formatter={(value: number) => [`IDR ${value.toLocaleString()}`, 'Estimated Cost']} />
                 <Bar dataKey="cost" fill="#06B6D4" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -609,7 +614,7 @@ export function VesselProfilePage() {
               <Box mt={3} p={3} sx={{ bgcolor: 'rgba(0,0,0,0.02)', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <Typography variant="subtitle1" fontWeight={700} mb={2}>
                   Net Cost Difference: <Box component="span" sx={{ color: compareData.costDifference > 0 ? 'error.main' : 'success.main' }}>
-                    {compareData.costDifference > 0 ? '+' : ''}₹ {compareData.costDifference.toLocaleString()}
+                    {compareData.costDifference > 0 ? '+' : ''}IDR {compareData.costDifference.toLocaleString()}
                   </Box>
                 </Typography>
               </Box>

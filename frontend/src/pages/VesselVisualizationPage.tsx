@@ -149,7 +149,7 @@ function VesselVisualizationDetail({ sessionId }: { sessionId: string }) {
                     </Grid>
                     <Grid size={{ xs: 12, md: 2 }}>
                       <Typography variant="caption" color="text.secondary">Estimated Cost</Typography>
-                      <Typography fontWeight={700}>₹ {selected.repairCost.toLocaleString("en-IN")}</Typography>
+                      <Typography fontWeight={700}>IDR {selected.repairCost.toLocaleString("id-ID")}</Typography>
                     </Grid>
                   </Grid>
                 </Grid>

@@ -116,7 +116,10 @@ export function LoginPage() {
       }
 
       const defaultRoute = user?.isAdmin ? "/admin/dashboard" : "/dashboard";
-      const from = location.state?.from?.pathname || defaultRoute;
+      let from = location.state?.from?.pathname || defaultRoute;
+      if (user?.isAdmin && !from.startsWith("/admin")) {
+        from = "/admin/dashboard";
+      }
       navigate(from, { replace: true });
     } catch (error: any) {
       setErrors({ email: error.message });
@@ -160,10 +163,10 @@ export function LoginPage() {
             width: "100%",
             maxWidth: 460,
             borderRadius: 6,
-            background: "rgba(15, 23, 42, 0.58)",
+            background: isAdminMode ? "rgba(7, 15, 33, 0.78)" : "rgba(15, 23, 42, 0.58)",
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            border: isAdminMode ? "1px solid rgba(96, 165, 250, 0.25)" : "1px solid rgba(255, 255, 255, 0.1)",
             boxShadow: "0 30px 70px rgba(2, 8, 23, 0.45)",
           }}
         >
@@ -172,10 +175,12 @@ export function LoginPage() {
               <Box>
                 <Logo />
                 <Typography variant="h4" sx={{ color: "#ffffff", fontWeight: 800, mt: 3, mb: 1 }}>
-                  Welcome aboard
+                  {isAdminMode ? "Command Center" : "Welcome aboard"}
                 </Typography>
                 <Typography sx={{ color: "rgba(226, 232, 240, 0.72)", lineHeight: 1.7 }}>
-                  Sign in to review inspections, track defects, and generate vessel reports.
+                  {isAdminMode 
+                    ? "Sign in to access platform controls, fleet intelligence, and system settings." 
+                    : "Sign in to review inspections, track defects, and generate vessel reports."}
                 </Typography>
               </Box>
 
@@ -188,7 +193,7 @@ export function LoginPage() {
               <Stack spacing={2}>
                 <TextField
                   fullWidth
-                  label="Work email"
+                  label={isAdminMode ? "Admin email" : "Work email"}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   error={Boolean(errors.email)}
@@ -250,13 +255,19 @@ export function LoginPage() {
                 disabled={isLoading}
                 sx={{
                   height: 52,
-                  bgcolor: "#60A5FA",
-                  color: "#03111f",
+                  bgcolor: isAdminMode ? "#3b82f6" : "#60A5FA",
+                  color: isAdminMode ? "#ffffff" : "#03111f",
                   fontSize: "1rem",
-                  "&:hover": { bgcolor: "#93C5FD" },
+                  "&:hover": { bgcolor: isAdminMode ? "#2563eb" : "#93C5FD" },
                 }}
               >
-                {isLoading ? <CircularProgress size={22} color="inherit" /> : "Sign in to MaritimeInspect"}
+                {isLoading ? (
+                  <CircularProgress size={22} color="inherit" />
+                ) : isAdminMode ? (
+                  "Log in to Command Center"
+                ) : (
+                  "Sign in to MaritimeInspect"
+                )}
               </Button>
 
               <Typography variant="body2" sx={{ textAlign: "center", color: "rgba(255,255,255,0.68)" }}>

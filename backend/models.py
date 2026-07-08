@@ -23,6 +23,8 @@ class InspectionSession(BaseModel):
     document_path: Optional[str] = None
     document_pdf_url: Optional[str] = None
     document_docx_url: Optional[str] = None
+    document_pdf_url_bahasa: Optional[str] = None
+    document_docx_url_bahasa: Optional[str] = None
     review_checkpoint: Optional[str] = None
     review_status: Optional[str] = None
     review_notes: Optional[str] = None
@@ -63,6 +65,8 @@ class DryDockVisit(BaseModel):
     total_defects: int = 0
     total_cost: float = 0.0
     visit_summary: Optional[str] = None
+    document_pdf_url_bahasa: Optional[str] = None
+    document_docx_url_bahasa: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class AnalysisSession(BaseModel):

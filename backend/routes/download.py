@@ -12,6 +12,8 @@ from fastapi import Depends
 from models import InspectionSession
 from modules.document_generation_module import DocumentGenerationModule
 from services.session_views import load_outputs
+from database import get_db
+from loguru import logger
 router = APIRouter()
 
 
@@ -67,12 +69,27 @@ def _collect_batch_repair_payloads(sessions: list[InspectionSession]) -> list[di
     return payloads
 
 @router.get("/download/{session_id}")
-async def download_report(session_id: str, inspection_service: InspectionService = Depends(get_inspection_service)):
+async def download_report(session_id: str, lang: str = "en", inspection_service: InspectionService = Depends(get_inspection_service)):
     
     session = await inspection_service.repo.find_one({"session_id": session_id})
 
     if not session:
         return {"error": "Session not found"}
+
+    if lang == "bahasa":
+        docx_url = session.get("document_docx_url_bahasa")
+        if docx_url and docx_url.startswith("http"):
+            return RedirectResponse(f"{docx_url}?download=")
+        
+        docx_path = session.get("document_path")
+        if docx_path:
+            bahasa_path = docx_path.replace(".docx", "_bahasa.docx")
+            if os.path.exists(bahasa_path):
+                return FileResponse(
+                    bahasa_path,
+                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    filename="inspection_report_bahasa.docx"
+                )
 
     doc_path = session.get("document_docx_url") or session.get("document_path")
     if not doc_path:
@@ -91,12 +108,30 @@ async def download_report(session_id: str, inspection_service: InspectionService
     )
 
 @router.get("/download/{session_id}/pdf")
-async def download_report_pdf(session_id: str, attachment: bool = False, inspection_service: InspectionService = Depends(get_inspection_service)):
+async def download_report_pdf(session_id: str, attachment: bool = False, lang: str = "en", inspection_service: InspectionService = Depends(get_inspection_service)):
     
     session = await inspection_service.repo.find_one({"session_id": session_id})
 
     if not session:
         return {"error": "Session not found"}
+
+    if lang == "bahasa":
+        pdf_url = session.get("document_pdf_url_bahasa")
+        if pdf_url and pdf_url.startswith("http"):
+            if attachment:
+                return RedirectResponse(f"{pdf_url}?download=")
+            return RedirectResponse(pdf_url)
+        
+        docx_path = session.get("document_path")
+        if docx_path:
+            bahasa_pdf_path = docx_path.replace(".docx", "_bahasa.pdf")
+            if os.path.exists(bahasa_pdf_path):
+                disposition = "attachment" if attachment else "inline"
+                return FileResponse(
+                    bahasa_pdf_path,
+                    media_type="application/pdf",
+                    headers={"Content-Disposition": f'{disposition}; filename="inspection_report_bahasa.pdf"'}
+                )
 
     pdf_url = session.get("document_pdf_url")
     if pdf_url and pdf_url.startswith("http"):
@@ -137,10 +172,30 @@ async def download_report_pdf(session_id: str, attachment: bool = False, inspect
     )
 
 @router.get("/batches/{batch_id}/download/docx")
-async def download_batch_report(batch_id: str, inspection_service: InspectionService = Depends(get_inspection_service), analysis_session_service: AnalysisSessionService = Depends(get_analysis_session_service)):
-    
+async def download_batch_report(
+    batch_id: str,
+    lang: str = "en",
+    inspection_service: InspectionService = Depends(get_inspection_service),
+    analysis_session_service: AnalysisSessionService = Depends(get_analysis_session_service),
+    drydock_visit_service: DrydockVisitService = Depends(get_drydock_visit_service)
+):
+    if lang == "bahasa":
+        visit_doc = await drydock_visit_service.repo.find_one({"visit_id": batch_id})
+        if visit_doc:
+            url = visit_doc.get("document_docx_url_bahasa")
+            if url and url.startswith("http"):
+                return RedirectResponse(f"{url}?download=")
+            
+            output_dir = os.path.join("outputs", "batches", batch_id)
+            bahasa_path = os.path.join(output_dir, "combined_vessel_inspection_report_bahasa.docx")
+            if os.path.exists(bahasa_path):
+                return FileResponse(
+                    bahasa_path,
+                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    filename=f"batch_{batch_id}_inspection_report_bahasa.docx"
+                )
+
     docs = await inspection_service.repo.find_many({"batch_id": batch_id}, sort=[("created_at", 1)])
-    
     if not docs:
         analysis_docs = await analysis_session_service.repo.find_many({"visit_id": batch_id})
         if analysis_docs:
@@ -151,7 +206,6 @@ async def download_batch_report(batch_id: str, inspection_service: InspectionSer
         return {"error": "Batch not found"}
 
     sessions = [InspectionSession(**doc) for doc in docs]
-    
     output_dir = os.path.join("outputs", "batches", batch_id)
     output_docx_path = os.path.join(output_dir, "combined_vessel_inspection_report.docx")
 
@@ -178,8 +232,33 @@ async def download_batch_report(batch_id: str, inspection_service: InspectionSer
     )
 
 @router.get("/batches/{batch_id}/download/pdf")
-async def download_batch_report_pdf(batch_id: str, attachment: bool = False, inspection_service: InspectionService = Depends(get_inspection_service), analysis_session_service: AnalysisSessionService = Depends(get_analysis_session_service)):
-    
+async def download_batch_report_pdf(
+    batch_id: str,
+    attachment: bool = False,
+    lang: str = "en",
+    inspection_service: InspectionService = Depends(get_inspection_service),
+    analysis_session_service: AnalysisSessionService = Depends(get_analysis_session_service),
+    drydock_visit_service: DrydockVisitService = Depends(get_drydock_visit_service)
+):
+    if lang == "bahasa":
+        visit_doc = await drydock_visit_service.repo.find_one({"visit_id": batch_id})
+        if visit_doc:
+            url = visit_doc.get("document_pdf_url_bahasa")
+            if url and url.startswith("http"):
+                if attachment:
+                    return RedirectResponse(f"{url}?download=")
+                return RedirectResponse(url)
+            
+            output_dir = os.path.join("outputs", "batches", batch_id)
+            bahasa_pdf_path = os.path.join(output_dir, "combined_vessel_inspection_report_bahasa.pdf")
+            if os.path.exists(bahasa_pdf_path):
+                disposition = "attachment" if attachment else "inline"
+                return FileResponse(
+                    bahasa_pdf_path,
+                    media_type="application/pdf",
+                    headers={"Content-Disposition": f'{disposition}; filename="batch_{batch_id}_inspection_report_bahasa.pdf"'}
+                )
+
     docs = await inspection_service.repo.find_many({"batch_id": batch_id}, sort=[("created_at", 1)])
     
     if not docs:
@@ -227,3 +306,17 @@ async def download_batch_report_pdf(batch_id: str, attachment: bool = False, ins
         media_type="application/pdf",
         headers={"Content-Disposition": f'{disposition}; filename="batch_{batch_id}_inspection_report.pdf"'}
     )
+
+@router.get("/reports/{inspection_id}/language")
+async def get_report_language(
+    inspection_id: str,
+    lang: str = "en",
+    db = Depends(get_db)
+):
+    from services.report_language_service import ReportLanguageService
+    try:
+        res = await ReportLanguageService.get_or_generate_report(inspection_id, lang, db)
+        return res
+    except Exception as e:
+        logger.error(f"Failed to get/generate report for lang {lang}: {e}")
+        return {"error": str(e)}

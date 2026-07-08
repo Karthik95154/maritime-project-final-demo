@@ -59,10 +59,10 @@ export function FinancialIntelligencePage() {
             Cost Exposure by Vessel
           </Typography>
           <Box sx={{ p: 3, border: '1px solid rgba(255,255,255,0.05)', borderRadius: 2 }}>
-            <CostRow label="Global Harmony" value="₹3.8 Cr" percentage={90} />
-            <CostRow label="Nordic Star" value="₹1.4 Cr" percentage={33} />
-            <CostRow label="Pacific Voyager" value="₹25.4 L" percentage={6} />
-            <CostRow label="Desert Rose" value="₹8.5 L" percentage={2} />
+            <CostRow label="Global Harmony" value="IDR 38M" percentage={90} />
+            <CostRow label="Nordic Star" value="IDR 14M" percentage={33} />
+            <CostRow label="Pacific Voyager" value="IDR 2.54M" percentage={6} />
+            <CostRow label="Desert Rose" value="IDR 850K" percentage={2} />
           </Box>
         </Box>
 
@@ -71,10 +71,10 @@ export function FinancialIntelligencePage() {
             Cost Exposure by Defect Type
           </Typography>
           <Box sx={{ p: 3, border: '1px solid rgba(255,255,255,0.05)', borderRadius: 2 }}>
-            <CostRow label="Structural Deformation" value="₹2.5 Cr" percentage={60} />
-            <CostRow label="Coating Breakdown" value="₹1.1 Cr" percentage={26} />
-            <CostRow label="Severe Corrosion" value="₹45 L" percentage={10} />
-            <CostRow label="Pitting" value="₹15 L" percentage={4} />
+            <CostRow label="Structural Deformation" value="IDR 25M" percentage={60} />
+            <CostRow label="Coating Breakdown" value="IDR 11M" percentage={26} />
+            <CostRow label="Severe Corrosion" value="IDR 4.5M" percentage={10} />
+            <CostRow label="Pitting" value="IDR 1.5M" percentage={4} />
           </Box>
         </Box>
       </Stack>
@@ -96,7 +96,7 @@ export function FinancialIntelligencePage() {
           <Grid size={{ xs: 12, sm: 4 }}>
             <Box sx={{ p: 3, bgcolor: 'rgba(59, 130, 246, 0.1)', borderRadius: 2, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
               <Typography variant="caption" color="#3B82F6" fontWeight={700} sx={{ textTransform: 'uppercase' }}>Early Detection Savings</Typography>
-              <Typography variant="h3" color="#3B82F6" fontWeight={800} mt={1}>₹85 L</Typography>
+              <Typography variant="h3" color="#3B82F6" fontWeight={800} mt={1}>IDR 8.5M</Typography>
               <Typography variant="body2" color="#94A3B8" mt={1}>From preventing major structural failures.</Typography>
             </Box>
           </Grid>

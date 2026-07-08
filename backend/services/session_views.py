@@ -232,7 +232,7 @@ def build_dashboard(sessions: list[InspectionSession]) -> dict[str, Any]:
             {"label": "Fleet Health Index", "value": f"{avg_health}%", "delta": "+2% vs last month", "trend": "up"},
             {"label": "Avg Turnaround Time", "value": f"{avg_tat_days} Days", "delta": "-0.5 days vs last month", "trend": "down"},
             {"label": "Active Inspections", "value": str(len(pending)), "delta": "Currently in dry dock", "trend": "up"},
-            {"label": "Financial Exposure", "value": f"INR {total_cost:,.0f}", "delta": "Fleet-wide repair estimate", "trend": "up"},
+            {"label": "Financial Exposure", "value": f"IDR {total_cost:,.0f}", "delta": "Fleet-wide repair estimate", "trend": "up"},
         ],
         "predictiveMaintenance": predictive_maintenance,
         "defectsByType": [{"name": name, "value": value} for name, value in defect_counts.most_common()] or [{"name": "Deformation", "value": 1}],

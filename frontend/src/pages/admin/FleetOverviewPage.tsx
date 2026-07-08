@@ -3,12 +3,12 @@ import { Box, Stack, Typography, Table, TableBody, TableCell, TableHead, TableRo
 import { Search, Filter, ArrowUpDown } from "lucide-react";
 
 const MOCK_FLEET = [
-  { id: 1, name: "Ocean Titan", imo: "IMO 9123456", health: 92, risk: "Low", criticalDefects: 0, repairCost: "₹1.2 L", lastInspection: "2026-06-01" },
-  { id: 2, name: "Pacific Voyager", imo: "IMO 9234567", health: 65, risk: "Medium", criticalDefects: 2, repairCost: "₹25.4 L", lastInspection: "2026-05-15" },
-  { id: 3, name: "Nordic Star", imo: "IMO 9345678", health: 41, risk: "High", criticalDefects: 5, repairCost: "₹1.4 Cr", lastInspection: "2026-05-28" },
-  { id: 4, name: "Atlantic Express", imo: "IMO 9456789", health: 88, risk: "Low", criticalDefects: 0, repairCost: "₹0", lastInspection: "2026-06-10" },
-  { id: 5, name: "Desert Rose", imo: "IMO 9567890", health: 78, risk: "Medium", criticalDefects: 1, repairCost: "₹8.5 L", lastInspection: "2026-04-22" },
-  { id: 6, name: "Global Harmony", imo: "IMO 9678901", health: 35, risk: "Critical", criticalDefects: 12, repairCost: "₹3.8 Cr", lastInspection: "2026-06-05" },
+  { id: 1, name: "Ocean Titan", imo: "IMO 9123456", health: 92, risk: "Low", criticalDefects: 0, repairCost: "IDR 120K", lastInspection: "2026-06-01" },
+  { id: 2, name: "Pacific Voyager", imo: "IMO 9234567", health: 65, risk: "Medium", criticalDefects: 2, repairCost: "IDR 2.54M", lastInspection: "2026-05-15" },
+  { id: 3, name: "Nordic Star", imo: "IMO 9345678", health: 41, risk: "High", criticalDefects: 5, repairCost: "IDR 14M", lastInspection: "2026-05-28" },
+  { id: 4, name: "Atlantic Express", imo: "IMO 9456789", health: 88, risk: "Low", criticalDefects: 0, repairCost: "IDR 0", lastInspection: "2026-06-10" },
+  { id: 5, name: "Desert Rose", imo: "IMO 9567890", health: 78, risk: "Medium", criticalDefects: 1, repairCost: "IDR 850K", lastInspection: "2026-04-22" },
+  { id: 6, name: "Global Harmony", imo: "IMO 9678901", health: 35, risk: "Critical", criticalDefects: 12, repairCost: "IDR 38M", lastInspection: "2026-06-05" },
 ];
 
 export function FleetOverviewPage() {

@@ -147,7 +147,7 @@ async def inspection_report(session_id: str, inspection_service: InspectionServi
         ],
         "executiveSummary": (
             f"{summary['vesselName']} inspection identified {len(defects)} defects "
-            f"with estimated repair exposure of INR {summary['totalEstimatedCost']:,.0f}."
+            f"with estimated repair exposure of IDR {summary['totalEstimatedCost']:,.0f}."
         ),
         "defects": defects,
         "downloadDocxUrl": f"/api/v1/download/{session.session_id}" if getattr(session, "document_docx_url", None) or getattr(session, "document_path", None) else None,

@@ -51,7 +51,7 @@ const kpisRow1 = [
   { label: "Fleet Health", value: "87 / 100", delta: "5.2%", trend: "up" as const },
   { label: "Active Inspections", value: "14", delta: "2", trend: "up" as const },
   { label: "Critical Defects", value: "42", delta: "12%", trend: "down" as const },
-  { label: "Repair Cost Exposure", value: "₹45,50,000", delta: "8%", trend: "down" as const },
+  { label: "Repair Cost Exposure", value: "IDR 4,550,000", delta: "8%", trend: "down" as const },
 ];
 
 const kpisRow2 = [
@@ -202,7 +202,7 @@ export function DashboardPage() {
                 </Box>
                 <Box textAlign="center">
                   <Typography variant="caption" color="text.secondary" fontWeight={700}>Repair Cost</Typography>
-                  <Typography variant="h4" color="text.primary" fontWeight={800}>₹6,50,000</Typography>
+                  <Typography variant="h4" color="text.primary" fontWeight={800}>IDR 650,000</Typography>
                 </Box>
                 <Box textAlign="center">
                   <Typography variant="caption" color="text.secondary" fontWeight={700}>Risk</Typography>
@@ -215,7 +215,7 @@ export function DashboardPage() {
         <Grid size={{ xs: 12, md: 4 }}>
           <SectionCard title="Total Repair Exposure">
              <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', pt: 2 }}>
-               <Typography variant="h3" fontWeight={800} color="#F59E0B">₹12,50,000</Typography>
+               <Typography variant="h3" fontWeight={800} color="#F59E0B">IDR 1,250,000</Typography>
                <Stack direction="row" spacing={1} alignItems="center" mt={1}>
                  <Chip label="↑ 14%" color="error" size="small" sx={{ fontWeight: 700, borderRadius: 1 }} />
                  <Typography variant="body2" color="text.secondary">vs previous quarter</Typography>

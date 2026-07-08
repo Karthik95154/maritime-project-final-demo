@@ -12,7 +12,7 @@ class RepairEstimationModule:
 
         knowledge_folder="knowledge",
 
-        currency="INR"
+        currency="IDR"
     ):
 
         self.knowledge_folder = (
@@ -660,7 +660,7 @@ if __name__ == "__main__":
 
             knowledge_folder="./repair_process_docs",
 
-            currency="INR"
+            currency="IDR"
         )
     )
 

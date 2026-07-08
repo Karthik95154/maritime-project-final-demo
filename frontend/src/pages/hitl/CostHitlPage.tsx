@@ -107,7 +107,7 @@ function normalizeCostState(raw: any) {
   const source = raw && typeof raw === "object" ? raw : {};
   const repairSummary = source.repair_summary && typeof source.repair_summary === "object" ? source.repair_summary : {};
   const defectRepairs = source.defect_repairs && typeof source.defect_repairs === "object" ? source.defect_repairs : {};
-  const defaultCurrency = repairSummary.currency || "INR";
+  const defaultCurrency = repairSummary.currency || "IDR";
 
   let totalEstimatedCost = 0;
   let totalMaterialCost = 0;
@@ -278,7 +278,7 @@ function CostHitlContent({ sessionId }: { sessionId: string }) {
       quantity_per_sqm: 0,
       required_quantity: 1,
       unit_cost: 0,
-      currency: nextState.repair_summary?.currency || "INR",
+      currency: nextState.repair_summary?.currency || "IDR",
       total_cost: 0
     });
     setHumanOutput(normalizeCostState(nextState));
@@ -295,7 +295,7 @@ function CostHitlContent({ sessionId }: { sessionId: string }) {
 
   const summary = humanOutput?.repair_summary || {};
   const defectEntries = Object.entries(humanOutput?.defect_repairs || {});
-  const currency = summary.currency || "INR";
+  const currency = summary.currency || "IDR";
   const severityChips = Object.entries(summary.severity_distribution || {});
 
   if (loading) return <Box p={4}><Typography>Loading session...</Typography></Box>;

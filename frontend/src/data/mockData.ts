@@ -21,7 +21,7 @@ export const kpiMetrics: KpiMetric[] = [
   { label: "Pending Reports", value: "15", delta: "8% from last month", trend: "up" },
   { label: "Completed Reports", value: "113", delta: "16% from last month", trend: "up" },
   { label: "Critical Defects", value: "32", delta: "5% from last month", trend: "up" },
-  { label: "Total Estimated Cost", value: "₹ 48,75,000", delta: "10% from last month", trend: "up" },
+  { label: "Total Estimated Cost", value: "IDR 4,875,000", delta: "10% from last month", trend: "up" },
 ];
 
 export const defectsByType = [

@@ -341,7 +341,7 @@ def run_cost_estimation_stage(session_id, session_folder):
         human_areas_data = load_json(session_id, "unique_json")
     repair_module = RepairEstimationModule(
         knowledge_folder="repair_process_docs",
-        currency="INR",
+        currency="IDR",
     )
     with temp_json(human_areas_data) as in_path, temp_json({}) as out_path:
         repair_module.process(

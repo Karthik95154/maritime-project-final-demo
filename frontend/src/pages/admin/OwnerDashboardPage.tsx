@@ -47,7 +47,7 @@ export function OwnerDashboardPage() {
             <NakedMetric label="Critical Vessels" value="7" color="#EF4444" subtext="Requires immediate review" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <NakedMetric label="Est. Repair Exposure" value="₹4.2 Cr" color="#3B82F6" subtext="Based on AI defect analysis" />
+            <NakedMetric label="Est. Repair Exposure" value="IDR 42M" color="#3B82F6" subtext="Based on AI defect analysis" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <NakedMetric label="Compliance" value="92%" color="#10B981" subtext="Across all class societies" />

@@ -36,7 +36,7 @@ export function MaintenancePlanningPage() {
           <PlanningCard title="Pending Repairs" value="86" icon={<Wrench size={20} />} color="#F59E0B" />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <PlanningCard title="Budget Forecast (Q3)" value="₹12.5 Cr" icon={<TrendingUp size={20} />} color="#10B981" />
+          <PlanningCard title="Budget Forecast (Q3)" value="IDR 125M" icon={<TrendingUp size={20} />} color="#10B981" />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <PlanningCard title="Predicted Risks" value="5" icon={<AlertCircle size={20} />} color="#EF4444" />
@@ -61,9 +61,9 @@ export function MaintenancePlanningPage() {
             </TableHead>
             <TableBody>
               {[
-                { name: "Nordic Star", date: "Aug 15, 2026", location: "Singapore Yard", repairs: "Hull Coating, Web Frame Reinforcement", cost: "₹1.4 Cr" },
-                { name: "Pacific Voyager", date: "Sep 02, 2026", location: "Dubai Drydocks", repairs: "Cargo Hold Cleaning, Minor Steel Renewal", cost: "₹25.4 L" },
-                { name: "Global Harmony", date: "Sep 20, 2026", location: "Rotterdam", repairs: "Major Structural Overhaul", cost: "₹3.8 Cr" },
+                { name: "Nordic Star", date: "Aug 15, 2026", location: "Singapore Yard", repairs: "Hull Coating, Web Frame Reinforcement", cost: "IDR 14M" },
+                { name: "Pacific Voyager", date: "Sep 02, 2026", location: "Dubai Drydocks", repairs: "Cargo Hold Cleaning, Minor Steel Renewal", cost: "IDR 2.54M" },
+                { name: "Global Harmony", date: "Sep 20, 2026", location: "Rotterdam", repairs: "Major Structural Overhaul", cost: "IDR 38M" },
               ].map((row, idx) => (
                 <TableRow key={idx} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
                   <TableCell><Typography variant="body2" color="#F8FAFC" fontWeight={700}>{row.name}</Typography></TableCell>

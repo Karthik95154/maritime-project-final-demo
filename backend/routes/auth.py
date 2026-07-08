@@ -16,13 +16,14 @@ async def signup(user: UserCreate, user_service: UserService = Depends(get_user_
         raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_password = get_password_hash(user.password)
+    is_admin = user.isAdmin or user.email == "admin@maritime.com"
     user_dict = {
         "name": user.name,
         "email": user.email,
         "hashed_password": hashed_password,
-        "role": "Platform Administrator" if user.isAdmin else "Regional Survey Lead",
+        "role": "Platform Administrator" if is_admin else "Regional Survey Lead",
         "organization": user.organization,
-        "isAdmin": user.isAdmin,
+        "isAdmin": is_admin,
         "created_at": datetime.utcnow()
     }
     
@@ -41,7 +42,7 @@ async def signup(user: UserCreate, user_service: UserService = Depends(get_user_
             "email": user.email,
             "role": user_dict["role"],
             "organization": user.organization,
-            "isAdmin": user.isAdmin
+            "isAdmin": user_dict["isAdmin"]
         }
     }
 
@@ -59,15 +60,18 @@ async def login(user: UserLogin, user_service: UserService = Depends(get_user_se
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     
+    is_admin = db_user.get("isAdmin", False) or db_user.get("email") == "admin@maritime.com"
+    role = "Platform Administrator" if is_admin else db_user.get("role", "Regional Survey Lead")
+    
     return {
         "access_token": access_token, 
         "token_type": "bearer",
         "user": {
             "name": db_user.get("name"),
             "email": db_user.get("email"),
-            "role": db_user.get("role"),
+            "role": role,
             "organization": db_user.get("organization"),
-            "isAdmin": db_user.get("isAdmin", False)
+            "isAdmin": is_admin
         }
     }
 

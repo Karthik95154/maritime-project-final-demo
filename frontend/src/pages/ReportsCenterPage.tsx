@@ -5,10 +5,12 @@ import { Download, FileText, Share2, ShieldCheck, Search, FileBadge, Trash2 } fr
 import { backendApi, getAssetUrl } from "../api/backendApi";
 import { SectionCard } from "../components/SectionCard";
 import { useState } from "react";
+import { useAppStore } from "../store/appStore";
 
 export function ReportsCenterPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAppStore();
 
   const queryClient = useQueryClient();
 
@@ -37,8 +39,8 @@ export function ReportsCenterPage() {
     report.imoNumber.includes(searchTerm)
   );
 
-  const formatInr = (value: number) =>
-    `INR ${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  const formatIDR = (value: number) =>
+    `IDR ${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
   return (
     <Stack spacing={3}>
@@ -125,7 +127,7 @@ export function ReportsCenterPage() {
                     <Grid size={{ xs: 6 }}>
                       <Box sx={{ p: 1.5, bgcolor: 'background.default', borderRadius: 2 }}>
                         <Typography variant="caption" color="text.secondary" display="block">Est. Cost</Typography>
-                        <Typography variant="h6" fontWeight={700}>{formatInr(report.totalEstimatedCost || 0)}</Typography>
+                        <Typography variant="h6" fontWeight={700}>{formatIDR(report.totalEstimatedCost || 0)}</Typography>
                       </Box>
                     </Grid>
                   </Grid>
@@ -134,7 +136,10 @@ export function ReportsCenterPage() {
                     <Button 
                       fullWidth 
                       variant="contained" 
-                      onClick={() => navigate(`/inspections/${report.sessionId}/report`)}
+                      onClick={() => {
+                        const prefix = user?.isAdmin ? "/admin" : "";
+                        navigate(`${prefix}/inspections/${report.sessionId}/report`);
+                      }}
                       startIcon={<FileText size={16} />}
                     >
                       View Report

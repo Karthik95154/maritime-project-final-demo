@@ -170,6 +170,8 @@ export const backendApi = {
       requestJson<{explanation: string}>(`/api/v1/inspections/${sessionId}/line_items/${defectId}/explain`),
     getInspectionReport: (sessionId: string) =>
     requestJson<InspectionReportResponse>(`/api/v1/inspections/${sessionId}/report`),
+  getReportLanguage: (inspectionId: string, lang: string) =>
+    requestJson<{ document_docx_url: string; document_pdf_url: string }>(`/api/v1/reports/${inspectionId}/language?lang=${lang}`),
   getDefectProgression: (sessionId: string) =>
     requestJson<ProgressionResponse>(`/api/v1/inspections/${sessionId}/progression`),
   compareReports: (imoNumber: string, v1: string, v2: string) =>

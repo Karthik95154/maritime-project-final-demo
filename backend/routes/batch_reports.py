@@ -140,7 +140,7 @@ async def get_batch_report(batch_id: str, inspection_service: InspectionService 
         "executiveSummary": (
             f"{vessel_name} combined inspection batch includes {len(sessions)} uploaded videos. "
             f"{completed_sessions} of {len(sessions)} processing jobs are complete, with "
-            f"{total_defects} detected defects and estimated repair exposure of INR {total_cost:,.0f}."
+            f"{total_defects} detected defects and estimated repair exposure of IDR {total_cost:,.0f}."
         ),
         "defects": defects,
         "downloadDocxUrl": f"/api/v1/batches/{batch_id}/download/docx?v={completed_sessions}" if completed_sessions > 0 else None,
